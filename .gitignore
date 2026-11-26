@@ -1,0 +1,19 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Generated index + runtime artifacts
+media.db
+.server.pid
+.web.pid
+.server.log
+.web.log
+
+# User data & large binaries (not tracked)
+media/
+models/
+llama.cpp/
+
+# OS
+.DS_Store

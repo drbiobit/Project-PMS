@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Search Media</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #262b35;
+    --text: #e6e9ef;
+    --muted: #8a93a3;
+    --accent: #4f8cff;
+    --accent-2: #37d0a0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    padding: 28px 24px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  header .sub {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .searchbar {
+    display: flex;
+    gap: 10px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .searchbar input[type=text] {
+    flex: 1;
+    padding: 12px 14px;
+    font-size: 15px;
+    color: var(--text);
+    background: #0c0e12;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+  }
+  .searchbar input[type=text]:focus { border-color: var(--accent); }
+  .searchbar select {
+    padding: 12px 10px;
+    background: #0c0e12;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+  }
+  .searchbar button {
+    padding: 12px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .searchbar button:hover { background: #3f7cf0; }
+  .count {
+    padding: 14px 24px 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 16px 24px 40px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color .15s, transform .15s;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .media img, .media video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .media audio { width: 90%; }
+  .media .audio-wrap {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(160deg, #141821, #0c0e12);
+  }
+  .media .audio-wrap .icon { font-size: 40px; }
+  .meta {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .score {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 13px;
+    color: #0c0e12;
+    background: var(--accent-2);
+    padding: 3px 8px;
+    border-radius: 7px;
+  }
+  .name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+  }
+  .empty, .error {
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .error { color: #ff7676; }
+  .kind-tag {
+    position: absolute;
+    top: 8px; left: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(0,0,0,.55);
+    padding: 2px 7px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Search Media</h1>
+    <div class="sub">EmbeddingGemma-2 · {{ media_count }} files indexed · semantic search over images, video &amp; audio</div>
+  </header>
+
+  <form class="searchbar" action="/search" method="post">
+    <input type="text" name="query" placeholder="Describe what you're looking for… e.g. a red sports car in the rain"
+           value="{{ query }}" autofocus>
+    <select name="top" title="Results">
+      {% for n in [5, 10, 20, 50] %}
+        <option value="{{ n }}" {% if n == top_n %}selected{% endif %}>{{ n }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Search</button>
+  </form>
+
+  {% if error %}
+    <div class="error">{{ error }}</div>
+  {% elif query and not results %}
+    <div class="empty">No matches for “{{ query }}”.</div>
+  {% elif not query %}
+    <div class="empty">Type a query above to search your media.</div>
+  {% else %}
+    <div class="count">Top {{ results|length }} matches for “{{ query }}”</div>
+    <div class="grid">
+      {% for r in results %}
+        <div class="card">
+          <div class="media">
+            <span class="kind-tag">{{ r.kind }}</span>
+            {% if r.kind == 'image' %}
+              <img src="{{ r.url }}" alt="{{ r.filename }}" loading="lazy">
+            {% elif r.kind == 'video' %}
+              <video src="{{ r.url }}" controls preload="metadata"></video>
+            {% else %}
+              <div class="audio-wrap">
+                <div class="icon">🎵</div>
+                <audio src="{{ r.url }}" controls></audio>
+              </div>
+            {% endif %}
+          </div>
+          <div class="meta">
+            <span class="score">{{ '%.3f'|format(r.score) }}</span>
+            <span class="name" title="{{ r.filename }}">{{ r.filename }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</body>
+</html>

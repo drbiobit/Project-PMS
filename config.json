@@ -1,0 +1,30 @@
+{
+  "media_folder": "./media",
+  "db_path": "media.db",
+
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8080,
+    "binary": "llama.cpp/llama-b12774/llama-server",
+    "model": "models/embeddinggemma/embeddinggemma-2-BF16.gguf",
+    "mmproj": "models/embeddinggemma/mmproj-BF16.gguf",
+    "image_tokens": 280,
+    "video_fps": 1.0,
+    "pooling": "mean",
+    "normalize": 2,
+    "ctx_size": 8192,
+    "ubatch": 1024
+  },
+
+  "embedding": {
+    "dim": 768,
+    "query_prefix": true,
+    "query_prefix_text": "task: search result | query: {query}"
+  },
+
+  "web": {
+    "host": "127.0.0.1",
+    "port": 5000,
+    "top_n": 10
+  }
+}
