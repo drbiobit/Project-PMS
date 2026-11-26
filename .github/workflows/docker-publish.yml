@@ -39,7 +39,7 @@ jobs:
           platforms: linux/amd64
           build-args: LLAMA_VARIANT=cpu-x64
           push: true
-          metadata-file: /tmp/meta.json
+          metadata-file: ${{ steps.meta.outputs.path }}
 
   cpu-arm64:
     name: CPU · aarch64
@@ -65,7 +65,7 @@ jobs:
           platforms: linux/arm64
           build-args: LLAMA_VARIANT=cpu-arm64
           push: true
-          metadata-file: /tmp/meta.json
+          metadata-file: ${{ steps.meta.outputs.path }}
 
   cuda:
     name: CUDA · NVIDIA GPU
@@ -91,7 +91,7 @@ jobs:
           platforms: linux/amd64
           build-args: LLAMA_VARIANT=cuda-x64
           push: true
-          metadata-file: /tmp/meta.json
+          metadata-file: ${{ steps.meta.outputs.path }}
 
   rocm:
     name: ROCm · AMD GPU
@@ -117,4 +117,4 @@ jobs:
           platforms: linux/amd64
           build-args: LLAMA_VARIANT=rocm-x64
           push: true
-          metadata-file: /tmp/meta.json
+          metadata-file: ${{ steps.meta.outputs.path }}
