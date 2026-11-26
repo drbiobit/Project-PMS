@@ -1,8 +1,0 @@
-inputs/
-outputs/
-models/
-assets/
-*.log
-.DS_Store
-__pycache__/
-.env

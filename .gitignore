@@ -14,6 +14,7 @@ media.db
 media/
 models/
 llama.cpp/
+references/
 
 # OS
 .DS_Store
