@@ -127,6 +127,7 @@ def run_indexing(cfg: dict, on_progress: Optional[ProgressFn] = None) -> dict:
     done = skipped = failed = 0
     started = time.time()
 
+    db_count = 0
     with MediaDB(db_path) as db:
         for i, (relpath, abspath, kind) in enumerate(files, start=1):
             mtime = os.path.getmtime(abspath)
@@ -165,13 +166,15 @@ def run_indexing(cfg: dict, on_progress: Optional[ProgressFn] = None) -> dict:
             if on_progress:
                 on_progress(done, total, skipped, failed, current, kind, started)
 
+        db_count = db.count()
+
     return {
         "total": total,
         "encoded": done,
         "skipped": skipped,
         "failed": failed,
         "seconds": time.time() - started,
-        "db_count": db.count(),
+        "db_count": db_count,
     }
 
 
