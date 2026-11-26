@@ -13,9 +13,10 @@ concurrency:
   group: docker-${{ github.ref }}
   cancel-in-progress: true
 
+# GHCR package names must be lowercase, so derive the image name from the
+# repo with the case stripped.
 env:
   REGISTRY: ghcr.io
-  IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   cpu:
@@ -23,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - id: vars
+        run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -35,9 +38,9 @@ jobs:
           platforms: linux/amd64
           build-args: LLAMA_VARIANT=cpu-x64
           tags: |
-            ${{ env.IMAGE }}:cpu
-            ${{ env.IMAGE }}:latest
-            ${{ env.IMAGE }}:sha-${{ github.sha }}
+            ${{ steps.vars.outputs.image }}:cpu
+            ${{ steps.vars.outputs.image }}:latest
+            ${{ steps.vars.outputs.image }}:sha-${{ github.sha }}
           push: true
 
   cpu-arm64:
@@ -45,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - id: vars
+        run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -57,8 +62,8 @@ jobs:
           platforms: linux/arm64
           build-args: LLAMA_VARIANT=cpu-arm64
           tags: |
-            ${{ env.IMAGE }}:cpu-arm64
-            ${{ env.IMAGE }}:sha-${{ github.sha }}
+            ${{ steps.vars.outputs.image }}:cpu-arm64
+            ${{ steps.vars.outputs.image }}:sha-${{ github.sha }}
           push: true
 
   cuda:
@@ -66,6 +71,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - id: vars
+        run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -78,8 +85,8 @@ jobs:
           platforms: linux/amd64
           build-args: LLAMA_VARIANT=cuda-x64
           tags: |
-            ${{ env.IMAGE }}:cuda
-            ${{ env.IMAGE }}:sha-${{ github.sha }}
+            ${{ steps.vars.outputs.image }}:cuda
+            ${{ steps.vars.outputs.image }}:sha-${{ github.sha }}
           push: true
 
   rocm:
@@ -87,6 +94,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - id: vars
+        run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -99,6 +108,6 @@ jobs:
           platforms: linux/amd64
           build-args: LLAMA_VARIANT=rocm-x64
           tags: |
-            ${{ env.IMAGE }}:rocm
-            ${{ env.IMAGE }}:sha-${{ github.sha }}
+            ${{ steps.vars.outputs.image }}:rocm
+            ${{ steps.vars.outputs.image }}:sha-${{ github.sha }}
           push: true
