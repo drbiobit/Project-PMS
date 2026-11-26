@@ -1,0 +1,21 @@
+# keep the build context small & clean
+venv/
+media/
+models/
+llama.cpp/
+references/
+docs/
+*.md
+.git/
+.github/
+__pycache__/
+*.pyc
+.DS_Store
+*.db
+.server.pid
+.web.pid
+.server.log
+.web.log
+config.json
+tui.py
+run.sh
