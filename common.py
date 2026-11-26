@@ -61,7 +61,8 @@ DEFAULT_CONFIG = {
 # File extensions we know how to embed, grouped by modality.
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 VIDEO_EXTS = {".mov", ".mp4", ".m4v", ".mkv", ".webm"}
-AUDIO_EXTS = {".wav", ".mp3", ".m4a", ".flac", ".ogg", ".aac"}
+# llama.cpp embeddings accept wav/mp3/flac; other formats need conversion first
+AUDIO_EXTS = {".wav", ".mp3", ".flac"}
 
 
 def _deep_merge(base: dict, override: dict) -> dict:
@@ -106,30 +107,77 @@ class EmbeddingError(RuntimeError):
     pass
 
 
+# Supported media types, mapped from extension.
+IMAGE_MIME = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
+VIDEO_MIME = {
+    ".mov": "video/quicktime",
+    ".mp4": "video/mp4",
+    ".m4v": "video/mp4",
+    ".mkv": "video/x-matroska",
+    ".webm": "video/webm",
+}
+AUDIO_FORMAT = {
+    ".wav": "wav",
+    ".mp3": "mp3",
+    ".flac": "flac",
+}
+
+
+def _ext_of(path):
+    return os.path.splitext(path)[1].lower()
+
+
 @dataclass
 class EmbeddingClient:
-    """Thin HTTP client for the running llama-server /embedding endpoint.
+    """Thin HTTP client for the running llama-server /v1/embeddings endpoint.
 
-    Large media payloads are sent directly over HTTP via `requests` (no shell,
-    so no 'argument list too long' problem). Vectors are truncated to the
-    configured MRL dimension and re-normalized so index-time and search-time
-    vectors are always comparable.
+    Verified working format (llama.cpp >= build ~11457, EmbeddingGemma 2):
+      text  -> plain string in the input array
+      image -> {"content":[{"type":"image_url","image_url":{"url":"data:<mime>;base64,<b64>"}}]}
+      video -> {"content":[{"type":"input_video","input_video":{"url":"data:<mime>;base64,<b64>"}}]}
+      audio -> {"content":[{"type":"input_audio","input_audio":{"data":"<b64>","format":"wav|mp3|flac"}}]}
+
+    Large media payloads are sent directly over HTTP via `requests` (no shell).
+    Vectors are truncated to the configured MRL dimension and re-normalized so
+    index-time and search-time vectors are always comparable.
     """
 
     base_url: str
     dim: int
+    model_name: str = "embeddinggemma-2"
     query_prefix: bool = True
     query_prefix_text: str = "task: search result | query: {query}"
     timeout: float = 300.0
+    _model_cache: str = ""
+
+    def _model(self) -> str:
+        # Cache the model id reported by the server so we send the right name.
+        if self._model_cache:
+            return self._model_cache
+        try:
+            r = requests.get(f"{self.base_url}/v1/models", timeout=10)
+            data = r.json()
+            models = data.get("data") or data  # OpenAI shape or bare list
+            if isinstance(models, list) and models:
+                self._model_cache = models[0].get("id") or self.model_name
+                return self._model_cache
+        except Exception:
+            pass
+        return self.model_name
 
     def _post(self, payload: dict) -> list[float]:
-        resp = requests.post(f"{self.base_url}/embedding", json=payload,
+        resp = requests.post(f"{self.base_url}/v1/embeddings", json=payload,
                               timeout=self.timeout)
         if resp.status_code != 200:
             raise EmbeddingError(f"server returned {resp.status_code}: {resp.text[:200]}")
         data = resp.json()
         try:
-            vec = data[0]["embedding"][0]
+            vec = data["data"][0]["embedding"]
         except (KeyError, IndexError, TypeError) as e:
             raise EmbeddingError(f"unexpected response shape: {data!r}"[:300]) from e
         return self._truncate(vec)
@@ -151,21 +199,45 @@ class EmbeddingClient:
             if self.query_prefix
             else text
         )
-        return self._post({"content": content})
+        payload = {"model": self._model(), "input": [content]}
+        return self._post(payload)
 
     def embed_image(self, path: str) -> list[float]:
-        return self._embed_media(path, "image_data", "[img-1]")
+        ext = _ext_of(path)
+        mime = IMAGE_MIME.get(ext)
+        if mime is None:
+            raise EmbeddingError(f"unsupported image type: {ext}")
+        return self._embed_media(path, "image_url", "image_url", mime)
 
     def embed_video(self, path: str) -> list[float]:
-        return self._embed_media(path, "video_data", "[video-1]")
+        ext = _ext_of(path)
+        mime = VIDEO_MIME.get(ext)
+        if mime is None:
+            raise EmbeddingError(f"unsupported video type: {ext}")
+        return self._embed_media(path, "input_video", "input_video", mime)
 
     def embed_audio(self, path: str) -> list[float]:
-        return self._embed_media(path, "audio_data", "[audio-1]")
-
-    def _embed_media(self, path: str, key: str, placeholder: str) -> list[float]:
+        ext = _ext_of(path)
+        fmt = AUDIO_FORMAT.get(ext)
+        if fmt is None:
+            raise EmbeddingError(f"unsupported audio type: {ext} (wav/mp3/flac supported)")
         with open(path, "rb") as f:
             b64 = base64.b64encode(f.read()).decode("ascii")
-        payload = {"content": placeholder, key: [{"id": 1, "data": b64}]}
+        payload = {
+            "model": self._model(),
+            "input": [{"content": [{"type": "input_audio",
+                                   "input_audio": {"data": b64, "format": fmt}}]}],
+        }
+        return self._post(payload)
+
+    def _embed_media(self, path: str, part_type: str, key: str, mime: str) -> list[float]:
+        with open(path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("ascii")
+        uri = f"data:{mime};base64,{b64}"
+        payload = {
+            "model": self._model(),
+            "input": [{"content": [{"type": part_type, key: {"url": uri}}]}],
+        }
         return self._post(payload)
 
     def healthy(self) -> bool:
