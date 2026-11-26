@@ -485,7 +485,9 @@
             {% endif %}
           </div>
           <div class="cap">
-            <span class="score">{{ '%.2f'|format(r.score) }}</span>
+            {% if r.score is not none %}
+              <span class="score">{{ '%.2f'|format(r.score) }}</span>
+            {% endif %}
             <span class="name" title="{{ r.filename }}">{{ r.filename }}</span>
           </div>
         </div>
@@ -533,7 +535,9 @@ function render(i) {
   cur = (i + RESULTS.length) % RESULTS.length;
   const r = RESULTS[cur];
   document.getElementById('lb-name').textContent = r.filename;
-  document.getElementById('lb-score').textContent = r.score.toFixed(2);
+  const sc = document.getElementById('lb-score');
+  sc.textContent = r.score == null ? '' : r.score.toFixed(2);
+  sc.style.display = r.score == null ? 'none' : '';
   document.getElementById('lb-pos').textContent = (cur + 1) + ' / ' + RESULTS.length;
   media.innerHTML = '';
   let el;

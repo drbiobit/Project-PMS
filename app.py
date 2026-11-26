@@ -41,6 +41,19 @@ def _client() -> EmbeddingClient:
     )
 
 
+def _result_rows(paths, filenames, kinds, indices, scores):
+    """Build result dicts from row indices and scores."""
+    results = []
+    for idx, score in zip(indices, scores):
+        results.append({
+            "filename": filenames[idx],
+            "kind": kinds[idx],
+            "score": score,
+            "url": "/media/" + paths[idx].replace(os.sep, "/"),
+        })
+    return results
+
+
 def _do_search(query: str, top_n: int):
     """Return a list of result dicts, best first."""
     qvec = _client().embed_text(query)
@@ -49,16 +62,22 @@ def _do_search(query: str, top_n: int):
     if matrix.size == 0:
         return []
     ranked = cosine_rank(matrix, qvec, top_n)
-    results = []
-    for idx, score in ranked:
-        rel = paths[idx]
-        results.append({
-            "filename": filenames[idx],
-            "kind": kinds[idx],
-            "score": score,
-            "url": "/media/" + rel.replace(os.sep, "/"),
-        })
-    return results
+    return _result_rows(paths, filenames, kinds,
+                        [i for i, _ in ranked], [s for _, s in ranked])
+
+
+def _all_media(top_n: int):
+    """Gallery view: the whole collection (capped), no query needed."""
+    with MediaDB(DB_PATH) as db:
+        paths, filenames, kinds, matrix = db.load_all()
+    if matrix.size == 0:
+        return []
+    n = min(top_n, len(paths))
+    rows = _result_rows(paths, filenames, kinds, list(range(n)), [0.0] * n)
+    for r in rows:
+        r["score"] = None  # gallery view: no scores to show
+    return rows
+
 
 
 app = Flask(__name__)
@@ -66,7 +85,10 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template("index.html", query="", results=[], top_n=CFG["web"]["top_n"],
+    # Open as a gallery: show the whole collection, no query required.
+    results = _all_media(CFG["web"]["top_n"])
+    return render_template("index.html", query="", results=results,
+                           top_n=CFG["web"]["top_n"],
                            media_count=_db_count(), error="")
 
 
