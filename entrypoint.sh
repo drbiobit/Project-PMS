@@ -1,30 +1,46 @@
 #!/bin/bash
 # PMS — Portable Media Search · container entrypoint
 #
-# 1. generate /app/config.json from environment
-# 2. start llama-server (EmbeddingGemma-2, multimodal embeddings)
-# 3. wait for /health
-# 4. build the SQLite index (incremental — fast on subsequent boots)
-# 5. serve the gallery (foreground)
+# Two deployment modes:
+#
+#   BUNDLED (default)   — the container starts its own llama-server and
+#                         talks to it on 127.0.0.1.
+#   EXTERNAL            — set PMS_EMBED_BASE_URL to point the app at an
+#                         EXTERNAL locally-hosted OpenAI-compatible endpoint
+#                         (Ollama, vLLM, a separate llama-server, a gateway).
+#                         The bundled server is NOT started.
+#
+# Steps:
+#   1. generate /app/config.json from environment
+#   2. start the embedding server (bundled) OR check the external endpoint
+#   3. wait for /health
+#   4. build the SQLite index (incremental — fast on subsequent boots)
+#   5. serve the gallery (foreground)
 set -euo pipefail
 
 MEDIA_DIR="${PMS_MEDIA_DIR:-/media}"
 DATA_DIR="${PMS_DATA_DIR:-/data}"
-PORT="${PMS_PORT:-5000}"
+PORT="${PMS_PORT:-9090}"
 SERVER_PORT="${PMS_SERVER_PORT:-8080}"
 TOP_N="${PMS_TOP_N:-100}"
-MODEL="/models/embeddinggemma-2-UD-Q5_K_XL.gguf"
-MMPROJ="/models/mmproj-Q8_0.gguf"
+AUTH_USER="${PMS_AUTH_USER:-admin}"
+AUTH_PASS="${PMS_AUTH_PASS:-pms}"
+# External OpenAI-compatible endpoint (empty = use the bundled server).
+EMBED_BASE_URL="${PMS_EMBED_BASE_URL:-}"
+EMBED_API_KEY="${PMS_EMBED_API_KEY:-}"
+EMBED_MODEL="${PMS_EMBED_MODEL:-embeddinggemma-2}"
 
 mkdir -p "$DATA_DIR"
 
 log() { echo "[pms] $*"; }
 
 # ── 1. config.json (container-specific) ────────────────────────────────
-python3 - "$MEDIA_DIR" "$DATA_DIR" "$PORT" "$SERVER_PORT" "$TOP_N" <<'PY'
+python3 - "$MEDIA_DIR" "$DATA_DIR" "$PORT" "$SERVER_PORT" "$TOP_N" \
+          "$AUTH_USER" "$AUTH_PASS" "$EMBED_BASE_URL" "$EMBED_API_KEY" "$EMBED_MODEL" <<'PY'
 import json, sys
 
-media, data, port, sport, top = sys.argv[1:6]
+(media, data, port, sport, top, user, password,
+ base_url, api_key, model) = sys.argv[1:11]
 cfg = {
     "media_folder": media,
     "db_path": f"{data}/media.db",
@@ -45,57 +61,86 @@ cfg = {
         "dim": 768,
         "query_prefix": True,
         "query_prefix_text": "task: search result | query: {query}",
+        "batch_size": 8,
+        "max_batch_tokens": 7000,
+        # External OpenAI-compatible endpoint. base_url empty = bundled server.
+        "api_key": api_key,
+        "model_name": model,
+        "base_url": base_url,
     },
     "web": {
         "host": "0.0.0.0",
         "port": int(port),
         "top_n": int(top),
     },
+    "auth": {
+        "username": user,
+        "password": password,
+    },
 }
 with open("/app/config.json", "w") as f:
     json.dump(cfg, f, indent=2)
-print(f"[pms] config.json written (media={media}, db={data}/media.db)")
+print(f"[pms] config.json written (media={media}, db={data}/media.db, "
+      f"endpoint={'external ' + base_url if base_url else 'bundled'})")
 PY
 
-# ── 2. start the embedding server ───────────────────────────────────────
-LLAMA_LOG="$DATA_DIR/llama-server.log"
-log "starting llama-server (port $SERVER_PORT)…"
-/opt/llama/llama-server \
-  --model "$MODEL" \
-  --mmproj "$MMPROJ" \
-  --embedding --pooling mean --embd-normalize 2 \
-  --host 127.0.0.1 --port "$SERVER_PORT" \
-  -c 8192 -ub 2048 --image-max-tokens 280 --video-fps 1 \
-  > "$LLAMA_LOG" 2>&1 &
-SERVER_PID=$!
-
+# ── 2+3. embedding endpoint: bundled server OR external ─────────────────
+SERVER_PID=""
 cleanup() {
-  kill "$SERVER_PID" 2>/dev/null || true
-  wait "$SERVER_PID" 2>/dev/null || true
+  [ -n "$SERVER_PID" ] && { kill "$SERVER_PID" 2>/dev/null || true;
+                            wait "$SERVER_PID" 2>/dev/null || true; }
 }
 trap cleanup EXIT
 
-# ── 3. wait for health ───────────────────────────────────────────────────
-log "waiting for embedding server…"
-ready=0
-for _ in $(seq 1 180); do
-  if curl -sf "http://127.0.0.1:$SERVER_PORT/health" | grep -q ok; then
-    ready=1
-    break
+if [ -n "$EMBED_BASE_URL" ]; then
+  # EXTERNAL mode: the endpoint is hosted elsewhere; just verify it answers.
+  log "using EXTERNAL embedding endpoint: $EMBED_BASE_URL (model $EMBED_MODEL)"
+  ready=0
+  for _ in $(seq 1 60); do
+    if curl -sf "$EMBED_BASE_URL/health" | grep -q ok; then ready=1; break; fi
+    sleep 2
+  done
+  if [ "$ready" -ne 1 ]; then
+    log "ERROR: external embedding endpoint not reachable at $EMBED_BASE_URL"
+    exit 1
   fi
-  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    log "ERROR: llama-server exited early — log tail:"
+  log "external embedding endpoint ready."
+else
+  # BUNDLED mode: start our own llama-server.
+  MODEL="/models/embeddinggemma-2-UD-Q5_K_XL.gguf"
+  MMPROJ="/models/mmproj-Q8_0.gguf"
+  LLAMA_LOG="$DATA_DIR/llama-server.log"
+  log "starting llama-server (port $SERVER_PORT)…"
+  /opt/llama/llama-server \
+    --model "$MODEL" \
+    --mmproj "$MMPROJ" \
+    --embedding --pooling mean --embd-normalize 2 \
+    --host 127.0.0.1 --port "$SERVER_PORT" \
+    -c 8192 -ub 2048 --image-max-tokens 280 --video-fps 1 \
+    > "$LLAMA_LOG" 2>&1 &
+  SERVER_PID=$!
+
+  log "waiting for embedding server…"
+  ready=0
+  for _ in $(seq 1 180); do
+    if curl -sf "http://127.0.0.1:$SERVER_PORT/health" | grep -q ok; then
+      ready=1
+      break
+    fi
+    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+      log "ERROR: llama-server exited early — log tail:"
+      tail -30 "$LLAMA_LOG"
+      exit 1
+    fi
+    sleep 1
+  done
+  if [ "$ready" -ne 1 ]; then
+    log "ERROR: embedding server did not become healthy — log tail:"
     tail -30 "$LLAMA_LOG"
     exit 1
   fi
-  sleep 1
-done
-if [ "$ready" -ne 1 ]; then
-  log "ERROR: embedding server did not become healthy — log tail:"
-  tail -30 "$LLAMA_LOG"
-  exit 1
+  log "embedding server ready."
 fi
-log "embedding server ready."
 
 # ── 4. build the index (incremental) ────────────────────────────────────
 if [ -d "$MEDIA_DIR" ]; then

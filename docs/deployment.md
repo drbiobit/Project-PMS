@@ -34,18 +34,24 @@ your index.
 docker pull ghcr.io/drbiobit/pms:cpu
 
 # 2. run it, pointing at your media folder
-docker run -d -p 5000:5000 \
+docker run -d -p 9090:9090 \
   -v /path/to/your/media:/media:ro \
   -v pms-data:/data \
   --name pms ghcr.io/drbiobit/pms:cpu
 
-# 3. open http://localhost:5000
+# 3. open http://localhost:9090
 ```
 
 The first boot embeds your whole collection (a few minutes for a few
 thousand photos; longer for video-heavy libraries). The index is stored
 in the `pms-data` volume, so restarts are instant — only new files get
 embedded.
+
+Indexing is **batched**: the engine embeds several files per request
+(`embedding.batch_size`, default 8) bounded by a token budget
+(`embedding.max_batch_tokens`), with per-file fallback if a batch fails.
+This is much faster than one request per file and is safe for large
+libraries.
 
 ## docker compose
 
@@ -56,7 +62,7 @@ services:
   pms:
     image: ghcr.io/drbiobit/pms:cpu
     ports:
-      - "5000:5000"
+      - "9090:9090"
     volumes:
       - ./media:/media:ro      # ← your media folder
       - pms-data:/data          # persistent index
@@ -77,7 +83,7 @@ services:
   pms:
     image: ghcr.io/drbiobit/pms:cuda
     ports:
-      - "5000:5000"
+      - "9090:9090"
     volumes:
       - ./media:/media:ro
       - pms-data:/data
@@ -102,9 +108,38 @@ reservation for your AMD stack.
 |----------|---------|---------|
 | `PMS_MEDIA_DIR` | `/media` | Mounted media folder |
 | `PMS_DATA_DIR` | `/data` | Where `media.db` + logs live |
-| `PMS_PORT` | `5000` | Gallery port |
+| `PMS_PORT` | `9090` | Gallery port |
 | `PMS_SERVER_PORT` | `8080` | Internal embedding server port |
 | `PMS_TOP_N` | `100` | Default number of gallery items / search results |
+| `PMS_AUTH_USER` | `admin` | Web app Basic-Auth username |
+| `PMS_AUTH_PASS` | `pms` | Web app Basic-Auth password |
+| `PMS_EMBED_BASE_URL` | _(empty)_ | External OpenAI-compatible endpoint. Empty = bundled server. |
+| `PMS_EMBED_API_KEY` | _(empty)_ | Bearer token sent to the endpoint (if it requires one). |
+| `PMS_EMBED_MODEL` | `embeddinggemma-2` | Model id requested from the endpoint. |
+
+### Locally hosted OpenAI endpoint (second image)
+
+The standard image bundles its own `llama-server`. If you'd rather run the
+embedding engine separately — on a GPU box, as a shared service, or via
+Ollama/vLLM — use the **slim app image** (`Dockerfile.openai`), which ships
+no engine and points at an external OpenAI-compatible endpoint instead.
+
+The repo ships a matching server image (`Dockerfile.server`) that runs
+`llama-server` with the same EmbeddingGemma-2 GGUF models as a standalone
+`/v1/embeddings` endpoint, and a `docker-compose.openai.yml` that wires the
+two together:
+
+```bash
+docker build -f Dockerfile.server -t pms-embed-server:cpu .
+docker build -f Dockerfile.openai  -t pms:openai .
+docker compose -f docker-compose.openai.yml up
+# → gallery on http://localhost:9090 (login admin / pms)
+```
+
+The app side is configured entirely through environment variables
+(`PMS_EMBED_BASE_URL`, `PMS_EMBED_API_KEY`, `PMS_EMBED_MODEL`), so you can
+swap in any OpenAI-compatible endpoint — Ollama, vLLM, a gateway — without
+touching the app image.
 
 ## Local (no Docker)
 

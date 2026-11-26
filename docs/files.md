@@ -28,7 +28,7 @@ Every file in the repository and what it does.
 |------|---------|
 | `Dockerfile` | Ubuntu 24.04 image. Build args pick the llama.cpp backend: `cpu-x64`, `cpu-arm64`, `cuda-x64` (NVIDIA), `rocm-x64` (AMD). Bakes in the pinned llama.cpp binary + EmbeddingGemma-2 Q5 model. |
 | `entrypoint.sh` | Container boot: writes `config.json` from env vars, starts `llama-server`, waits for health, builds the index (incremental), serves the gallery. |
-| `docker-compose.yml` | One service: mount your media folder, persistent index volume, port 5000. GPU variants documented inline. |
+| `docker-compose.yml` | One service: mount your media folder, persistent index volume, port 9090. GPU variants documented inline. |
 | `.dockerignore` | Keeps the build context clean (no `media/`, `venv/`, `models/`, …). |
 | `requirements.txt` | Python deps for the container: flask, numpy, requests. |
 | `scripts/fetch_llama.py` | Dev tool: prints the newest llama.cpp release + download URL for a given asset pattern (used when bumping the pinned version in `Dockerfile`). |

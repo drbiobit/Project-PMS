@@ -27,7 +27,9 @@ from common import (
     VIDEO_EXTS,
     EmbeddingClient,
     MediaDB,
+    estimate_tokens,
     load_config,
+    make_client,
     server_url,
 )
 
@@ -110,17 +112,55 @@ def iter_media(media_folder: str):
 # --------------------------------------------------------------------------- #
 
 
+def _embed_one(client, kind: str, path: str):
+    return {
+        "image": client.embed_image,
+        "video": client.embed_video,
+        "audio": client.embed_audio,
+    }[kind](path)
+
+
+def _make_batches(items, batch_size: int, max_tokens: int, cfg: dict):
+    """Group items into batches bounded by file count AND estimated token budget.
+
+    `items` is a list of (relpath, abspath, kind, mtime, (w, h, d)). A new
+    batch starts when adding the next file would exceed `batch_size` files or
+    push the running token estimate past `max_tokens` (so a batch of large
+    video/audio can't overflow the server's context window).
+    """
+    batches = []
+    current = []
+    current_tokens = 0
+    for item in items:
+        kind = item[2]
+        duration = item[4][2]
+        est = estimate_tokens(kind, {"duration": duration}, cfg)
+        if current and (len(current) >= batch_size
+                        or current_tokens + est > max_tokens):
+            batches.append(current)
+            current = []
+            current_tokens = 0
+        current.append(item)
+        current_tokens += est
+    if current:
+        batches.append(current)
+    return batches
+
+
 def run_indexing(cfg: dict, on_progress: Optional[ProgressFn] = None) -> dict:
-    """Index the configured media folder. Returns a summary dict."""
+    """Index the configured media folder. Returns a summary dict.
+
+    Embedding is BATCHED: groups of up to `batch_size` files (also bounded by
+    an estimated token budget) are sent to the server in a single request. If
+    a batch fails, the group is retried one file at a time so a single bad
+    file can't poison the whole batch.
+    """
     media_folder = os.path.abspath(cfg["media_folder"])
     db_path = os.path.abspath(cfg["db_path"])
     emb = cfg["embedding"]
-    client = EmbeddingClient(
-        base_url=server_url(cfg),
-        dim=emb["dim"],
-        query_prefix=emb["query_prefix"],
-        query_prefix_text=emb["query_prefix_text"],
-    )
+    batch_size = int(emb.get("batch_size", 8))
+    max_batch_tokens = int(emb.get("max_batch_tokens", 7000))
+    client = make_client(cfg)
 
     files = list(iter_media(media_folder))
     total = len(files)
@@ -129,42 +169,67 @@ def run_indexing(cfg: dict, on_progress: Optional[ProgressFn] = None) -> dict:
 
     db_count = 0
     with MediaDB(db_path) as db:
-        for i, (relpath, abspath, kind) in enumerate(files, start=1):
+        # Pass 1: collect the files that actually need embedding (with metadata).
+        to_embed = []  # (relpath, abspath, kind, mtime, (w, h, d))
+        for relpath, abspath, kind in files:
             mtime = os.path.getmtime(abspath)
             current = os.path.basename(abspath)
-
             if db.is_indexed(relpath, mtime):
                 skipped += 1
                 if on_progress:
                     on_progress(done, total, skipped, failed, current, "skip", started)
                 continue
+            width, height, duration = get_metadata(kind, abspath)
+            to_embed.append((relpath, abspath, kind, mtime,
+                             (width, height, duration)))
 
-            width = height = duration = None
+        # Pass 2: embed in batches, upserting as we go.
+        for batch in _make_batches(to_embed, batch_size, max_batch_tokens, cfg):
             try:
-                width, height, duration = get_metadata(kind, abspath)
-                vec = {
-                    "image": client.embed_image,
-                    "video": client.embed_video,
-                    "audio": client.embed_audio,
-                }[kind](abspath)
-                db.upsert(
-                    path=relpath,
-                    filename=os.path.basename(abspath),
-                    kind=kind,
-                    width=width,
-                    height=height,
-                    duration=duration,
-                    size_bytes=os.path.getsize(abspath),
-                    mtime=mtime,
-                    embedding=vec,
-                )
-                done += 1
-            except Exception as e:  # keep going; report the failure
-                failed += 1
-                current = f"{current}  ({type(e).__name__}: {e})"
-
-            if on_progress:
-                on_progress(done, total, skipped, failed, current, kind, started)
+                vecs = client.embed_batch([(k, p) for _, p, k, _, _ in batch])
+                ok = True
+            except Exception:
+                ok = False
+            if ok:
+                for (relpath, abspath, kind, mtime, (w, h, d)), vec in zip(batch, vecs):
+                    db.upsert(
+                        path=relpath,
+                        filename=os.path.basename(abspath),
+                        kind=kind,
+                        width=w,
+                        height=h,
+                        duration=d,
+                        size_bytes=os.path.getsize(abspath),
+                        mtime=mtime,
+                        embedding=vec,
+                    )
+                    done += 1
+                    if on_progress:
+                        on_progress(done, total, skipped, failed,
+                                     os.path.basename(abspath), kind, started)
+            else:
+                # Batch failed -> retry one at a time to isolate the bad file(s).
+                for (relpath, abspath, kind, mtime, (w, h, d)) in batch:
+                    current = os.path.basename(abspath)
+                    try:
+                        vec = _embed_one(client, kind, abspath)
+                        db.upsert(
+                            path=relpath,
+                            filename=os.path.basename(abspath),
+                            kind=kind,
+                            width=w,
+                            height=h,
+                            duration=d,
+                            size_bytes=os.path.getsize(abspath),
+                            mtime=mtime,
+                            embedding=vec,
+                        )
+                        done += 1
+                    except Exception as e:
+                        failed += 1
+                        current = f"{current}  ({type(e).__name__}: {e})"
+                    if on_progress:
+                        on_progress(done, total, skipped, failed, current, kind, started)
 
         db_count = db.count()
 
@@ -225,14 +290,7 @@ def main():
 
 
 def client_healthy(cfg) -> bool:
-    emb = cfg["embedding"]
-    client = EmbeddingClient(
-        base_url=server_url(cfg),
-        dim=emb["dim"],
-        query_prefix=emb["query_prefix"],
-        query_prefix_text=emb["query_prefix_text"],
-    )
-    return client.healthy()
+    return make_client(cfg).healthy()
 
 
 if __name__ == "__main__":

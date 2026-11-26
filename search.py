@@ -13,22 +13,15 @@ import os
 import sys
 
 from common import (
-    EmbeddingClient,
     MediaDB,
     cosine_rank,
     load_config,
-    server_url,
+    make_client,
 )
 
 
 def search(cfg: dict, query: str, top_n: int):
-    emb = cfg["embedding"]
-    client = EmbeddingClient(
-        base_url=server_url(cfg),
-        dim=emb["dim"],
-        query_prefix=emb["query_prefix"],
-        query_prefix_text=emb["query_prefix_text"],
-    )
+    client = make_client(cfg)
     qvec = client.embed_text(query)
 
     db_path = os.path.abspath(cfg["db_path"])

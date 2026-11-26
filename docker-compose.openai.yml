@@ -1,0 +1,54 @@
+# PMS — "locally hosted OpenAI endpoint" deployment.
+#
+# Two services:
+#   embedding  — a standalone llama-server serving our EmbeddingGemma-2 GGUF
+#                models as an OpenAI-compatible /v1/embeddings endpoint.
+#   pms        — the slim app image, pointed at `embedding` via env vars.
+#
+# Build both images first:
+#   docker build -f Dockerfile.server -t pms-embed-server:cpu .
+#   docker build -f Dockerfile.openai  -t pms:openai .
+#
+# Then:
+#   docker compose -f docker-compose.openai.yml up
+#   # → gallery on http://localhost:9090  (login admin / pms)
+#
+# To use a DIFFERENT local OpenAI endpoint (Ollama, vLLM, a gateway):
+# replace the `embedding` service and set PMS_EMBED_BASE_URL /
+# PMS_EMBED_MODEL accordingly — the `pms` service never changes.
+services:
+  embedding:
+    image: pms-embed-server:cpu
+    # For a GPU host, rebuild with --build-arg LLAMA_VARIANT=cuda-x64 and
+    # point this service at that image (+ deploy: resources: reservations).
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    # The endpoint is OpenAI-compatible; no auth by default.
+
+  pms:
+    image: pms:openai
+    depends_on:
+      embedding:
+        condition: service_healthy
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./media:/media
+      - pms-openai-data:/data
+    environment:
+      PMS_MEDIA_DIR: /media
+      PMS_DATA_DIR: /data
+      PMS_PORT: "9090"
+      PMS_TOP_N: "100"
+      PMS_AUTH_USER: admin
+      PMS_AUTH_PASS: pms
+      # Point the app at the locally-hosted OpenAI endpoint:
+      PMS_EMBED_BASE_URL: "http://embedding:8080/v1"
+      PMS_EMBED_API_KEY: ""
+      PMS_EMBED_MODEL: "embeddinggemma-2"
+
+volumes:
+  pms-openai-data:

@@ -37,8 +37,8 @@ DEFAULT_CONFIG = {
         "host": "127.0.0.1",
         "port": 8080,
         "binary": "llama.cpp/llama-b12774/llama-server",
-        "model": "models/embeddinggemma/embeddinggemma-2-BF16.gguf",
-        "mmproj": "models/embeddinggemma/mmproj-BF16.gguf",
+        "model": "models/embeddinggemma/embeddinggemma-2-UD-Q5_K_XL.gguf",
+        "mmproj": "models/embeddinggemma/mmproj-Q8_0.gguf",
         "image_tokens": 280,
         "video_fps": 1.0,
         "pooling": "mean",
@@ -50,11 +50,26 @@ DEFAULT_CONFIG = {
         "dim": 768,
         "query_prefix": True,
         "query_prefix_text": "task: search result | query: {query}",
+        # Batching: max files per request, and a token budget so a batch of
+        # large media can't overflow the server's context window.
+        "batch_size": 8,
+        "max_batch_tokens": 7000,
+        # OpenAI-compatible endpoint. `base_url` (when set) points the app at
+        # an EXTERNAL locally-hosted endpoint (Ollama, vLLM, a separate
+        # llama-server, a gateway) instead of the bundled one; `api_key` is
+        # sent as a Bearer token; `model_name` is the model id to request.
+        "api_key": "",
+        "model_name": "embeddinggemma-2",
+        "base_url": "",
     },
     "web": {
         "host": "127.0.0.1",
-        "port": 5000,
+        "port": 9090,
         "top_n": 10,
+    },
+    "auth": {
+        "username": "admin",
+        "password": "pms",
     },
 }
 
@@ -96,6 +111,47 @@ def save_config(path: str, cfg: dict) -> None:
 def server_url(cfg: dict) -> str:
     s = cfg["server"]
     return f"http://{s['host']}:{s['port']}"
+
+
+def make_client(cfg: dict) -> "EmbeddingClient":
+    """Build an EmbeddingClient from config.
+
+    Uses `embedding.base_url` when set (an external OpenAI-compatible
+    endpoint such as Ollama/vLLM/a separate llama-server), otherwise the
+    bundled server's URL. Sends `embedding.api_key` as a Bearer token and
+    requests `embedding.model_name`.
+    """
+    emb = cfg["embedding"]
+    base_url = (emb.get("base_url") or server_url(cfg)).rstrip("/")
+    # The client appends "/v1/embeddings" to base_url. OpenAI-compatible
+    # endpoints are usually referenced as ".../v1", so strip a trailing /v1
+    # to avoid a doubled path segment.
+    if base_url.endswith("/v1"):
+        base_url = base_url[: -len("/v1")]
+    return EmbeddingClient(
+        base_url=base_url,
+        dim=emb["dim"],
+        model_name=emb.get("model_name", "embeddinggemma-2"),
+        query_prefix=emb["query_prefix"],
+        query_prefix_text=emb["query_prefix_text"],
+        api_key=emb.get("api_key", ""),
+    )
+
+
+def verify_credentials(cfg: dict, username: str, password: str) -> bool:
+    """Check Basic-Auth credentials against the configured user/password.
+
+    Constant-time comparison to avoid a trivial timing side-channel.
+    """
+    import hmac
+
+    auth = cfg.get("auth", {})
+    expected_user = auth.get("username", "")
+    expected_pass = auth.get("password", "")
+    return (
+        hmac.compare_digest(username, expected_user)
+        and hmac.compare_digest(password, expected_pass)
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -153,14 +209,25 @@ class EmbeddingClient:
     query_prefix: bool = True
     query_prefix_text: str = "task: search result | query: {query}"
     timeout: float = 300.0
+    api_key: str = ""
     _model_cache: str = ""
+
+    def _headers(self) -> dict:
+        """Request headers. Adds an Authorization bearer token when an API key
+        is configured, so the client works against any OpenAI-compatible
+        endpoint (llama-server, Ollama, vLLM, a local gateway, ...)."""
+        h: dict = {}
+        if self.api_key:
+            h["Authorization"] = f"Bearer {self.api_key}"
+        return h
 
     def _model(self) -> str:
         # Cache the model id reported by the server so we send the right name.
         if self._model_cache:
             return self._model_cache
         try:
-            r = requests.get(f"{self.base_url}/v1/models", timeout=10)
+            r = requests.get(f"{self.base_url}/v1/models", timeout=10,
+                             headers=self._headers())
             data = r.json()
             models = data.get("data") or data  # OpenAI shape or bare list
             if isinstance(models, list) and models:
@@ -172,7 +239,7 @@ class EmbeddingClient:
 
     def _post(self, payload: dict) -> list[float]:
         resp = requests.post(f"{self.base_url}/v1/embeddings", json=payload,
-                              timeout=self.timeout)
+                              timeout=self.timeout, headers=self._headers())
         if resp.status_code != 200:
             raise EmbeddingError(f"server returned {resp.status_code}: {resp.text[:200]}")
         data = resp.json()
@@ -203,42 +270,74 @@ class EmbeddingClient:
         return self._post(payload)
 
     def embed_image(self, path: str) -> list[float]:
-        ext = _ext_of(path)
-        mime = IMAGE_MIME.get(ext)
-        if mime is None:
-            raise EmbeddingError(f"unsupported image type: {ext}")
-        return self._embed_media(path, "image_url", "image_url", mime)
+        return self.embed_batch([("image", path)])[0]
 
     def embed_video(self, path: str) -> list[float]:
-        ext = _ext_of(path)
-        mime = VIDEO_MIME.get(ext)
-        if mime is None:
-            raise EmbeddingError(f"unsupported video type: {ext}")
-        return self._embed_media(path, "input_video", "input_video", mime)
+        return self.embed_batch([("video", path)])[0]
 
     def embed_audio(self, path: str) -> list[float]:
-        ext = _ext_of(path)
-        fmt = AUDIO_FORMAT.get(ext)
-        if fmt is None:
-            raise EmbeddingError(f"unsupported audio type: {ext} (wav/mp3/flac supported)")
-        with open(path, "rb") as f:
-            b64 = base64.b64encode(f.read()).decode("ascii")
-        payload = {
-            "model": self._model(),
-            "input": [{"content": [{"type": "input_audio",
-                                   "input_audio": {"data": b64, "format": fmt}}]}],
-        }
-        return self._post(payload)
+        return self.embed_batch([("audio", path)])[0]
 
-    def _embed_media(self, path: str, part_type: str, key: str, mime: str) -> list[float]:
-        with open(path, "rb") as f:
-            b64 = base64.b64encode(f.read()).decode("ascii")
-        uri = f"data:{mime};base64,{b64}"
-        payload = {
-            "model": self._model(),
-            "input": [{"content": [{"type": part_type, key: {"url": uri}}]}],
-        }
-        return self._post(payload)
+    def embed_batch(self, items: list[tuple[str, str]]) -> list[list[float]]:
+        """Embed a list of (kind, path) items in ONE request.
+
+        The OpenAI-compatible /v1/embeddings endpoint accepts a multi-item
+        `input` array and returns one embedding per item, in order. Batching
+        cuts N HTTP round-trips to N/batch_size and lets the engine process the
+        group in a single forward pass.
+
+        Returns a list of truncated+normalized vectors, one per item.
+        """
+        if not items:
+            return []
+        content = [{"content": [self._content_part(kind, path)]}
+                   for kind, path in items]
+        payload = {"model": self._model(), "input": content}
+        resp = requests.post(f"{self.base_url}/v1/embeddings", json=payload,
+                             timeout=self.timeout, headers=self._headers())
+        if resp.status_code != 200:
+            raise EmbeddingError(
+                f"server returned {resp.status_code}: {resp.text[:200]}")
+        data = resp.json()
+        try:
+            embeddings = [d["embedding"] for d in data["data"]]
+        except (KeyError, TypeError) as e:
+            raise EmbeddingError(
+                f"unexpected response shape: {data!r}"[:300]) from e
+        if len(embeddings) != len(items):
+            raise EmbeddingError(
+                f"expected {len(items)} embeddings, got {len(embeddings)}")
+        return [self._truncate(v) for v in embeddings]
+
+    def _content_part(self, kind: str, path: str) -> dict:
+        """Build the typed content part for one media item."""
+        ext = _ext_of(path)
+        if kind == "image":
+            mime = IMAGE_MIME.get(ext)
+            if mime is None:
+                raise EmbeddingError(f"unsupported image type: {ext}")
+            with open(path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("ascii")
+            return {"type": "image_url",
+                    "image_url": {"url": f"data:{mime};base64,{b64}"}}
+        if kind == "video":
+            mime = VIDEO_MIME.get(ext)
+            if mime is None:
+                raise EmbeddingError(f"unsupported video type: {ext}")
+            with open(path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("ascii")
+            return {"type": "input_video",
+                    "input_video": {"url": f"data:{mime};base64,{b64}"}}
+        if kind == "audio":
+            fmt = AUDIO_FORMAT.get(ext)
+            if fmt is None:
+                raise EmbeddingError(
+                    f"unsupported audio type: {ext} (wav/mp3/flac supported)")
+            with open(path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("ascii")
+            return {"type": "input_audio",
+                    "input_audio": {"data": b64, "format": fmt}}
+        raise EmbeddingError(f"unknown media kind: {kind}")
 
     def healthy(self) -> bool:
         """True when the server's /health endpoint reports ok."""
@@ -247,6 +346,33 @@ class EmbeddingClient:
             return resp.status_code == 200
         except requests.RequestException:
             return False
+
+
+# --------------------------------------------------------------------------- #
+# Token estimation (for batch sizing)
+# --------------------------------------------------------------------------- #
+
+# Approximate token cost per unit, from the EmbeddingGemma-2 model card:
+#   image -> image_tokens (a fixed budget per image)
+#   video -> ~140 tokens per sampled frame
+#   audio -> ~25 tokens per second
+VIDEO_TOKENS_PER_FRAME = 140
+AUDIO_TOKENS_PER_SECOND = 25
+
+
+def estimate_tokens(kind: str, metadata, cfg: dict) -> int:
+    """Rough token cost of one media item, used to size a batch so it stays
+    inside the server's context window (see `max_batch_tokens`)."""
+    server = cfg["server"]
+    duration = (metadata or {}).get("duration") or 0.0
+    if kind == "image":
+        return int(server.get("image_tokens", 280))
+    if kind == "video":
+        return int(duration * server.get("video_fps", 1.0)
+                   * VIDEO_TOKENS_PER_FRAME) + 1
+    if kind == "audio":
+        return int(duration * AUDIO_TOKENS_PER_SECOND) + 1
+    return 0
 
 
 # --------------------------------------------------------------------------- #

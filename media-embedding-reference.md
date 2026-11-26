@@ -16,7 +16,7 @@ Everything verified by running the local model + reading the authoritative docs
 | Pooling | **Mean pooling** |
 | Precision | **bfloat16 or float32** (NOT float16 — returns NaN) |
 | Modalities | text, image, video, audio (all in one shared 768-d space) |
-| Our files | `embeddinggemma-2-BF16.gguf` (558 MB) + `mmproj-BF16.gguf` (982 MB, vision projector) |
+| Our files | `embeddinggemma-2-UD-Q5_K_XL.gguf` (~1.5 GB, Q5_K_XL) + `mmproj-Q8_0.gguf` (vision/audio projector) |
 
 ### Token cost per modality (shared 8,192 budget)
 | Modality | Cost | Max input |
@@ -48,8 +48,8 @@ Everything verified by running the local model + reading the authoritative docs
 
 ```bash
 ./llama.cpp/llama-b12774/llama-server \
-  --model models/embeddinggemma/embeddinggemma-2-BF16.gguf \
-  --mmproj models/embeddinggemma/mmproj-BF16.gguf \
+  --model models/embeddinggemma/embeddinggemma-2-UD-Q5_K_XL.gguf \
+  --mmproj models/embeddinggemma/mmproj-Q8_0.gguf \
   --embedding --pooling mean --embd-normalize 2 \
   --host 127.0.0.1 --port 8080
 ```

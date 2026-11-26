@@ -705,6 +705,11 @@
             <input type="number" id="dim" name="dim" value="{{ cfg['embedding']['dim'] }}">
           </div>
           <div class="field-row">
+            <label for="batch_size">Batch size<small>files per embedding request · default 8</small></label>
+            <input type="number" id="batch_size" name="batch_size"
+                   value="{{ cfg['embedding']['batch_size'] }}">
+          </div>
+          <div class="field-row">
             <label for="image_tokens">Image token budget<small>model default: 280</small></label>
             <input type="number" id="image_tokens" name="image_tokens"
                    value="{{ cfg['server']['image_tokens'] }}">

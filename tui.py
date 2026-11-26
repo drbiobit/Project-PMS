@@ -26,7 +26,6 @@ import time
 import webbrowser
 
 import requests
-from textual import App, work
 from textual.app import App
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
@@ -234,7 +233,6 @@ class ProgressScreen(Screen):
             "done": "✓ Ready",
         }.get(s.stage, s.stage)
 
-    @work(exclusive=True)
     def workflow(self):
         s = self.state
         try:

@@ -2,7 +2,7 @@
 
 ## The web app
 
-Open `http://localhost:5000` (Docker) or `http://127.0.0.1:5001` (local).
+Open `http://localhost:9090` (Docker) or `http://127.0.0.1:9090` (local).
 The web app is the **single interface** — gallery, search, settings,
 indexing, and server control all live here on one port.
 

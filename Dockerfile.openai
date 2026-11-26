@@ -1,0 +1,51 @@
+# PMS — slim app image for the "external OpenAI endpoint" deployment.
+#
+# Unlike the main Dockerfile, this image does NOT bake in llama.cpp or the
+# model files. The app talks to an EXTERNAL locally-hosted OpenAI-compatible
+# endpoint, configured at runtime via environment:
+#
+#   PMS_EMBED_BASE_URL   e.g. http://embedding:8080/v1  (empty = bundled)
+#   PMS_EMBED_API_KEY    optional bearer token
+#   PMS_EMBED_MODEL      model id to request (default embeddinggemma-2)
+#
+# Pair it with the standalone embedding server (Dockerfile.server) via
+# docker-compose.openai.yml.
+#
+# Build:
+#   docker build -f Dockerfile.openai -t pms:openai .
+#
+# Run (endpoint already running):
+#   docker run -p 9090:9090 -v /path/to/media:/media \
+#     -e PMS_EMBED_BASE_URL=http://host:8080/v1 pms:openai
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ── system dependencies ────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl python3 python3-pip libgomp1 ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── application code ───────────────────────────────────────────────────
+WORKDIR /app
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+
+COPY app.py common.py build_index.py search.py entrypoint.sh ./
+RUN chmod +x /app/entrypoint.sh
+COPY templates/ templates/
+COPY static/ static/
+
+# ── runtime ────────────────────────────────────────────────────────────
+VOLUME ["/data"]
+ENV PMS_MEDIA_DIR=/media \
+    PMS_DATA_DIR=/data \
+    PMS_PORT=9090 \
+    PMS_TOP_N=100 \
+    PMS_AUTH_USER=admin \
+    PMS_AUTH_PASS=pms \
+    PMS_EMBED_BASE_URL= \
+    PMS_EMBED_API_KEY= \
+    PMS_EMBED_MODEL=embeddinggemma-2
+EXPOSE 9090
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -19,7 +19,15 @@ import threading
 import time
 
 import requests
-from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
+from flask import (
+    Flask,
+    Response,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+)
 from werkzeug.utils import secure_filename
 
 from build_index import run_indexing
@@ -28,8 +36,10 @@ from common import (
     MediaDB,
     cosine_rank,
     load_config,
+    make_client,
     save_config,
     server_url,
+    verify_credentials,
 )
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -160,13 +170,7 @@ def start_indexing() -> str:
 # --------------------------------------------------------------------------- #
 
 def _client() -> EmbeddingClient:
-    emb = CFG["embedding"]
-    return EmbeddingClient(
-        base_url=server_url(CFG),
-        dim=emb["dim"],
-        query_prefix=emb["query_prefix"],
-        query_prefix_text=emb["query_prefix_text"],
-    )
+    return make_client(CFG)
 
 
 def _result_rows(paths, filenames, kinds, indices, scores):
@@ -225,6 +229,23 @@ def _db_count() -> int:
 
 app = Flask(__name__)
 
+# Routes that must stay reachable without credentials: health checks from
+# run.sh / Docker and the browser's status polling.
+AUTH_EXEMPT = {"/health"}
+
+
+@app.before_request
+def _require_auth():
+    """Enforce HTTP Basic Auth on every route except the exempt set."""
+    if request.path in AUTH_EXEMPT:
+        return None
+    auth = request.authorization
+    if auth is None or not verify_credentials(CFG, auth.username, auth.password):
+        resp = Response("Authentication required", status=401)
+        resp.headers["WWW-Authenticate"] = 'Basic realm="PMS"'
+        return resp
+    return None
+
 
 @app.route("/")
 def index():
@@ -280,6 +301,8 @@ def save_settings():
     try:
         CFG["media_folder"] = f.get("media_folder", CFG["media_folder"]).strip()
         CFG["embedding"]["dim"] = int(f.get("dim", CFG["embedding"]["dim"]))
+        CFG["embedding"]["batch_size"] = int(
+            f.get("batch_size", CFG["embedding"]["batch_size"]))
         CFG["server"]["image_tokens"] = int(f.get("image_tokens", CFG["server"]["image_tokens"]))
         CFG["server"]["video_fps"] = float(f.get("video_fps", CFG["server"]["video_fps"]))
         CFG["embedding"]["query_prefix"] = f.get("query_prefix") == "on"

@@ -26,13 +26,13 @@ The fastest way is Docker — one command, your media folder mounted, a
 gallery in your browser:
 
 ```bash
-docker run -d -p 5000:5000 \
+docker run -d -p 9090:9090 \
   -v /path/to/your/media:/media:ro \
   -v pms-data:/data \
   ghcr.io/drbiobit/pms:cpu
 ```
 
-Then open **http://localhost:5000**. First boot builds the index
+Then open **http://localhost:9090**. First boot builds the index
 automatically; every boot after that is instant.
 
 | You want… | …so use |
