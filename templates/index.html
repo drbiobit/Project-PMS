@@ -2,298 +2,448 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Search Media</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PMS — Portable Media Search</title>
+<link rel="stylesheet" href="/static/fonts.css">
 <style>
   :root {
-    --bg: #0f1115;
-    --panel: #171a21;
-    --border: #262b35;
-    --text: #e6e9ef;
-    --muted: #8a93a3;
-    --accent: #4f8cff;
-    --accent-2: #37d0a0;
+    --stage: #0f0e0c;
+    --panel: #161411;
+    --panel-2: #1c1a16;
+    --line: #2b2822;
+    --line-soft: #211f1a;
+    --ink: #eceae4;
+    --ink-soft: #b5b0a6;
+    --muted: #8d887d;
+    --brass: #d2a24c;
+    --brass-soft: rgba(210, 162, 76, 0.16);
+    --danger: #e07a5f;
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "Instrument Sans", -apple-system, "Segoe UI", sans-serif;
+    --gap: 14px;
   }
   * { box-sizing: border-box; }
+  html { scrollbar-color: #38342c var(--stage); }
   body {
     margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
+    background: var(--stage);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
+  ::selection { background: rgba(210, 162, 76, 0.32); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; border-radius: 4px; }
+  input::placeholder { color: var(--muted); }
+  input { caret-color: var(--brass); }
+
+  /* scrollbars */
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-track { background: var(--stage); }
+  *::-webkit-scrollbar-thumb { background: #38342c; border-radius: 6px; border: 2px solid var(--stage); }
+  *::-webkit-scrollbar-thumb:hover { background: #4a453b; }
+
+  /* ── header ─────────────────────────────────────────────────── */
   header {
-    padding: 28px 24px 12px;
-    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 26px 28px 18px;
   }
-  header h1 {
-    margin: 0 0 4px;
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .wordmark {
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1;
   }
-  header .sub {
+  .wordmark b { color: var(--brass); font-weight: 600; }
+  .brand-sub {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--muted);
-    font-size: 13px;
   }
+  .head-meta {
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .head-meta b { color: var(--ink-soft); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ── search ─────────────────────────────────────────────────── */
   .searchbar {
     display: flex;
     gap: 10px;
-    padding: 18px 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
+    padding: 0 28px 22px;
   }
-  .searchbar input[type=text] {
+  .search-field {
     flex: 1;
-    padding: 12px 14px;
-    font-size: 15px;
-    color: var(--text);
-    background: #0c0e12;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    outline: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 4px 6px 4px 14px;
+    transition: border-color .15s;
   }
-  .searchbar input[type=text]:focus { border-color: var(--accent); }
-  .searchbar select {
-    padding: 12px 10px;
-    background: #0c0e12;
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+  .search-field:focus-within { border-color: var(--brass); }
+  .search-field svg { flex: 0 0 auto; color: var(--muted); }
+  .search-field input {
+    flex: 1;
+    background: none;
+    border: none;
     outline: none;
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15.5px;
+    padding: 10px 0;
+    min-width: 0;
   }
-  .searchbar button {
-    padding: 12px 22px;
-    font-size: 15px;
+  .search-field .clear {
+    flex: 0 0 auto;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 6px;
+    display: none;
+    border-radius: 6px;
+  }
+  .search-field .clear:hover { color: var(--ink); }
+  .search-field.has-value .clear { display: block; }
+  .searchbar button[type=submit] {
+    flex: 0 0 auto;
+    font-family: var(--sans);
+    font-size: 14.5px;
     font-weight: 600;
-    color: #fff;
-    background: var(--accent);
+    color: #141210;
+    background: var(--brass);
     border: none;
     border-radius: 10px;
+    padding: 0 22px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .searchbar button[type=submit]:hover { background: #e0b25e; }
+  .searchbar .top-select {
+    flex: 0 0 auto;
+    background: var(--panel);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0 10px;
+    font-family: var(--sans);
+    font-size: 14px;
+    outline: none;
     cursor: pointer;
   }
-  .searchbar button:hover { background: #3f7cf0; }
+
+  /* ── count line ─────────────────────────────────────────────── */
   .count {
-    padding: 14px 24px 0;
-    color: var(--muted);
+    padding: 0 28px 14px;
     font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
   }
+  .count b { color: var(--ink-soft); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .count .q { font-family: var(--serif); font-style: italic; color: var(--ink-soft); }
+  .count a {
+    color: var(--brass);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .count a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ── gallery grid ───────────────────────────────────────────── */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
-    padding: 16px 24px 40px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--gap);
+    padding: 0 28px 56px;
   }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
+  @media (min-width: 640px)  { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 900px)  { .grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 1280px) { .grid { grid-template-columns: repeat(5, 1fr); } }
+
+  .tile {
+    position: relative;
     display: flex;
     flex-direction: column;
-    transition: border-color .15s, transform .15s;
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--panel);
     cursor: pointer;
+    transition: border-color .15s, transform .15s;
   }
-  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .media {
+  .tile:hover { border-color: var(--brass); transform: translateY(-2px); }
+  .tile .ph {
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 10;
-    background: #000;
+    aspect-ratio: 1 / 1;
+    background: #0a0908;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
   }
-  .media img, .media video {
-    width: 100%;
-    height: 100%;
+  .tile .ph img, .tile .ph video {
+    width: 100%; height: 100%;
     object-fit: cover;
     display: block;
     pointer-events: none;
   }
-  .media audio { width: 90%; }
-  .media .audio-wrap {
-    width: 100%;
-    height: 100%;
+  .tile .ph .audio-ph {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: linear-gradient(160deg, #141821, #0c0e12);
+    gap: 12px;
+    color: var(--muted);
+    background:
+      radial-gradient(ellipse at 50% 120%, rgba(210,162,76,.10), transparent 60%),
+      var(--panel);
   }
-  .media .audio-wrap .icon { font-size: 40px; }
-  .meta {
-    padding: 10px 12px;
+  .tile .ph .audio-ph svg { opacity: .8; }
+  .kind-tag {
+    position: absolute;
+    top: 10px; left: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: rgba(10, 9, 8, 0.72);
+    padding: 3px 8px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+  }
+  .tile .cap {
     display: flex;
     align-items: center;
     gap: 10px;
-    border-top: 1px solid var(--border);
+    padding: 9px 12px;
+    border-top: 1px solid var(--line-soft);
+    background: var(--panel);
   }
   .score {
     flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
-    font-weight: 700;
-    font-size: 13px;
-    color: #0c0e12;
-    background: var(--accent-2);
-    padding: 3px 8px;
-    border-radius: 7px;
+    color: #141210;
+    background: var(--brass);
+    padding: 2px 7px;
+    border-radius: 6px;
   }
-  .name {
+  .tile .cap .name {
     flex: 1;
-    font-size: 13px;
-    color: var(--text);
+    font-size: 12.5px;
+    color: var(--ink-soft);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     text-align: right;
   }
+
+  /* ── empty / error ──────────────────────────────────────────── */
   .empty, .error {
-    padding: 40px 24px;
+    padding: 64px 28px;
     text-align: center;
     color: var(--muted);
-    font-size: 15px;
   }
-  .error { color: #ff7676; }
-  .kind-tag {
-    position: absolute;
-    top: 8px; left: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .5px;
-    text-transform: uppercase;
-    color: #fff;
-    background: rgba(0,0,0,.55);
-    padding: 2px 7px;
-    border-radius: 6px;
-    z-index: 1;
+  .empty h2 {
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin: 0 0 8px;
   }
+  .empty p { margin: 0; font-size: 15px; }
+  .error { color: var(--danger); font-size: 15px; }
 
-  /* ── full-page lightbox viewer ─────────────────────────────── */
+  /* ── lightbox ───────────────────────────────────────────────── */
   #lightbox {
     position: fixed;
     inset: 0;
-    background: rgba(5, 6, 8, 0.97);
+    height: 100dvh;
+    background: rgba(8, 7, 6, 0.98);
     z-index: 100;
     display: none;
     flex-direction: column;
   }
   #lightbox.open { display: flex; }
   .lb-top {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 14px;
     padding: 14px 20px;
-    background: rgba(15, 17, 21, .9);
-    border-bottom: 1px solid var(--border);
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    background: rgba(15, 14, 12, 0.92);
+    border-bottom: 1px solid var(--line-soft);
   }
-  .lb-top .lb-name {
+  .lb-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-family: var(--sans);
+    font-size: 13.5px;
+    font-weight: 500;
+    border-radius: 9px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .lb-btn:hover { border-color: var(--brass); color: var(--ink); }
+  .lb-name {
     flex: 1;
-    font-size: 15px;
-    font-weight: 600;
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .lb-top .lb-score {
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
+  .lb-pos {
     font-size: 13px;
-    color: #0c0e12;
-    background: var(--accent-2);
-    padding: 3px 8px;
-    border-radius: 7px;
-  }
-  .lb-top .lb-pos {
     color: var(--muted);
-    font-size: 13px;
     font-variant-numeric: tabular-nums;
   }
-  .lb-btn {
-    background: #0c0e12;
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    font-size: 14px;
-    padding: 8px 14px;
-    cursor: pointer;
-  }
-  .lb-btn:hover { border-color: var(--accent); color: #fff; }
   .lb-stage {
     flex: 1;
+    min-height: 0;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px 84px;
-    position: relative;
+    padding: 18px 88px;
   }
-  .lb-stage img {
+  .lb-media {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lb-media img {
     max-width: 100%;
     max-height: 100%;
+    width: auto;
+    height: auto;
     object-fit: contain;
-    border-radius: 8px;
-    box-shadow: 0 8px 40px rgba(0,0,0,.7);
+    border-radius: 6px;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+    transition: transform .25s cubic-bezier(.2, .8, .2, 1), opacity .2s;
+    cursor: zoom-in;
   }
-  .lb-stage video {
+  .lb-media img.zoomed { transform: scale(1.6); cursor: zoom-out; }
+  .lb-media video {
     max-width: 100%;
     max-height: 100%;
-    border-radius: 8px;
+    border-radius: 6px;
   }
-  .lb-stage .lb-audio {
+  .lb-media .lb-audio {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 18px;
+    gap: 22px;
+    color: var(--muted);
   }
-  .lb-stage .lb-audio .icon { font-size: 72px; }
-  .lb-stage .lb-audio audio { width: min(560px, 80%); height: 42px; }
+  .lb-media .lb-audio audio { width: min(560px, 80vw); height: 44px; }
   .lb-nav {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
-    background: rgba(23, 26, 33, .85);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 26px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: rgba(28, 26, 22, 0.85);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
     z-index: 2;
   }
-  .lb-nav:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .lb-nav.prev { left: 14px; }
-  .lb-nav.next { right: 14px; }
+  .lb-nav:hover { border-color: var(--brass); color: var(--ink); background: var(--panel-2); }
+  .lb-nav.prev { left: 16px; }
+  .lb-nav.next { right: 16px; }
   .lb-hint {
-    padding: 10px 20px 16px;
+    flex: 0 0 auto;
+    padding: 12px 20px calc(14px + env(safe-area-inset-bottom, 0px));
     text-align: center;
     color: var(--muted);
     font-size: 12px;
   }
-  kbd {
-    background: #0c0e12;
-    border: 1px solid var(--border);
+  .lb-hint kbd {
+    font-family: var(--sans);
+    font-size: 11px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
     border-radius: 5px;
     padding: 1px 6px;
-    font-size: 11px;
+    margin: 0 2px;
   }
+  @media (max-width: 640px) {
+    .lb-stage { padding: 12px 66px; }
+    .lb-nav { width: 44px; height: 44px; }
+    .lb-nav.prev { left: 10px; }
+    .lb-nav.next { right: 10px; }
+    .lb-name { font-size: 15px; }
+    .lb-hint .kbd-only { display: none; }
+  }
+
+  /* one authored motion: media settles in */
+  .lb-media > * { animation: settle .28s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes settle {
+    from { opacity: 0; transform: scale(.985); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .lb-media > img.zoomed { animation: none; }
 </style>
 </head>
 <body>
   <header>
-    <h1>Search Media</h1>
-    <div class="sub">EmbeddingGemma-2 · {{ media_count }} files indexed · semantic search over images, video &amp; audio</div>
+    <div class="brand">
+      <div class="wordmark">P<b>M</b>S</div>
+      <div class="brand-sub">Portable Media Search</div>
+    </div>
+    <div class="head-meta">
+      <b>{{ media_count }}</b> files · EmbeddingGemma-2 · llama.cpp
+    </div>
   </header>
 
-  <form class="searchbar" action="/search" method="post">
-    <input type="text" name="query" placeholder="Describe what you're looking for… e.g. a red sports car in the rain"
-           value="{{ query }}" autofocus>
-    <select name="top" title="Results">
-      {% for n in [5, 10, 20, 50] %}
+  <form class="searchbar" action="/search" method="post" id="searchform">
+    <div class="search-field {% if query %}has-value{% endif %}" id="searchfield">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/>
+      </svg>
+      <input type="text" name="query" id="query"
+             placeholder="Describe what you’re looking for — a red car in the rain, a birthday cake, your dog…"
+             value="{{ query }}">
+      <button type="button" class="clear" id="clearbtn" title="Clear" aria-label="Clear search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <select name="top" class="top-select" title="Results">
+      {% for n in [10, 20, 50, 100] %}
         <option value="{{ n }}" {% if n == top_n %}selected{% endif %}>{{ n }}</option>
       {% endfor %}
     </select>
@@ -301,30 +451,41 @@
   </form>
 
   {% if error %}
-    <div class="error">{{ error }}</div>
+    <div class="error">Search failed: {{ error }}</div>
   {% elif query and not results %}
-    <div class="empty">No matches for “{{ query }}”.</div>
-  {% elif not query %}
-    <div class="empty">Type a query above to search your media.</div>
+    <div class="empty">
+      <h2>No matches</h2>
+      <p>Nothing in your collection matches “{{ query }}”. Try fewer, more visual words.</p>
+    </div>
   {% else %}
-    <div class="count">Top {{ results|length }} matches for “{{ query }}” · click any card to view full page</div>
+    <div class="count">
+      {% if query %}
+        <span><b>{{ results|length }}</b> matches for <span class="q">“{{ query }}”</span></span>
+        <a href="/" id="alllink">view all</a>
+      {% else %}
+        <span><b>{{ results|length }}</b> of <b>{{ media_count }}</b> items in your collection</span>
+      {% endif %}
+    </div>
     <div class="grid">
       {% for r in results %}
-        <div class="card" data-idx="{{ loop.index0 }}">
-          <div class="media">
+        <div class="tile" data-idx="{{ loop.index0 }}" role="button" tabindex="0"
+             aria-label="Open {{ r.filename }}">
+          <div class="ph">
             <span class="kind-tag">{{ r.kind }}</span>
             {% if r.kind == 'image' %}
               <img src="{{ r.url }}" alt="{{ r.filename }}" loading="lazy">
             {% elif r.kind == 'video' %}
-              <video src="{{ r.url }}" preload="metadata" muted></video>
+              <video src="{{ r.url }}" preload="metadata" muted aria-hidden="true"></video>
             {% else %}
-              <div class="audio-wrap">
-                <div class="icon">🎵</div>
+              <div class="audio-ph">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                </svg>
               </div>
             {% endif %}
           </div>
-          <div class="meta">
-            <span class="score">{{ '%.3f'|format(r.score) }}</span>
+          <div class="cap">
+            <span class="score">{{ '%.2f'|format(r.score) }}</span>
             <span class="name" title="{{ r.filename }}">{{ r.filename }}</span>
           </div>
         </div>
@@ -334,65 +495,87 @@
 
   <div id="lightbox" aria-modal="true">
     <div class="lb-top">
-      <button class="lb-btn" id="lb-close" title="Close (Esc)">✕ Close</button>
+      <button class="lb-btn" id="lb-close" title="Close (Esc)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+        Close
+      </button>
       <span class="lb-name" id="lb-name"></span>
-      <span class="lb-score" id="lb-score"></span>
+      <span class="score" id="lb-score"></span>
       <span class="lb-pos" id="lb-pos"></span>
     </div>
     <div class="lb-stage" id="lb-stage">
-      <button class="lb-nav prev" id="lb-prev" title="Previous (←)">‹</button>
-      <div id="lb-media"></div>
-      <button class="lb-nav next" id="lb-next" title="Next (→)">›</button>
+      <button class="lb-nav prev" id="lb-prev" aria-label="Previous (left arrow)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+      </button>
+      <div class="lb-media" id="lb-media"></div>
+      <button class="lb-nav next" id="lb-next" aria-label="Next (right arrow)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m9 18 6-6-6-6"/>
+        </svg>
+      </button>
     </div>
-    <!-- nav buttons live in .lb-stage; only #lb-media is swapped -->
-    <div class="lb-hint"><kbd>←</kbd> <kbd>→</kbd> to browse · <kbd>Esc</kbd> to close · click photo to zoom in/out</div>
+    <div class="lb-hint">
+      <span class="kbd-only"><kbd>←</kbd><kbd>→</kbd> browse · </span><kbd>Esc</kbd> close · click photo to zoom<span class="kbd-only"> · swipe on mobile</span>
+    </div>
   </div>
 
 <script>
 const RESULTS = {{ results|tojson }};
 const lb = document.getElementById('lightbox');
+const media = document.getElementById('lb-media');
 let cur = -1;
-let zoomed = false;
 
 function render(i) {
   cur = (i + RESULTS.length) % RESULTS.length;
   const r = RESULTS[cur];
   document.getElementById('lb-name').textContent = r.filename;
-  document.getElementById('lb-score').textContent = r.score.toFixed(3);
+  document.getElementById('lb-score').textContent = r.score.toFixed(2);
   document.getElementById('lb-pos').textContent = (cur + 1) + ' / ' + RESULTS.length;
-  zoomed = false;
-  const media = document.getElementById('lb-media');
   media.innerHTML = '';
-  const el = document.createElement(r.kind === 'image' ? 'img' : r.kind === 'video' ? 'video' : 'div');
+  let el;
   if (r.kind === 'image') {
+    el = document.createElement('img');
     el.src = r.url;
     el.alt = r.filename;
-    el.style.cursor = 'zoom-in';
-    el.onclick = () => {
-      zoomed = !zoomed;
-      el.style.transform = zoomed ? 'scale(1.6)' : '';
-      el.style.cursor = zoomed ? 'zoom-out' : 'zoom-in';
-    };
+    el.onclick = () => el.classList.toggle('zoomed');
   } else if (r.kind === 'video') {
+    el = document.createElement('video');
     el.src = r.url;
     el.controls = true;
     el.autoplay = true;
   } else {
+    el = document.createElement('div');
     el.className = 'lb-audio';
-    el.innerHTML = '<div class="icon">🎵</div><audio controls autoplay src="' + r.url + '"></audio>';
+    el.innerHTML = '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+    const a = document.createElement('audio');
+    a.controls = true;
+    a.autoplay = true;
+    a.src = r.url;
+    el.appendChild(a);
   }
   media.appendChild(el);
 }
 
-function open(i) { lb.classList.add('open'); render(i); document.body.style.overflow = 'hidden'; }
+function open(i) {
+  lb.classList.add('open');
+  render(i);
+  document.body.style.overflow = 'hidden';
+}
 function close() {
   lb.classList.remove('open');
-  document.getElementById('lb-media').innerHTML = '';
+  media.innerHTML = '';
   document.body.style.overflow = '';
 }
 
-document.querySelectorAll('.card').forEach(card => {
-  card.addEventListener('click', () => open(+card.dataset.idx));
+document.querySelectorAll('.tile').forEach(t => {
+  t.addEventListener('click', () => open(+t.dataset.idx));
+  t.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(+t.dataset.idx); }
+  });
 });
 document.getElementById('lb-close').onclick = close;
 document.getElementById('lb-prev').onclick = () => render(cur - 1);
@@ -405,6 +588,27 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') close();
   else if (e.key === 'ArrowLeft') render(cur - 1);
   else if (e.key === 'ArrowRight') render(cur + 1);
+});
+
+// swipe on mobile
+let touchX = null;
+media.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+media.addEventListener('touchend', e => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 48) render(cur + (dx < 0 ? 1 : -1));
+  touchX = null;
+}, { passive: true });
+
+// search field: show clear button, submit on Enter
+const q = document.getElementById('query');
+const field = document.getElementById('searchfield');
+q.addEventListener('input', () => field.classList.toggle('has-value', q.value.trim() !== ''));
+document.getElementById('clearbtn').addEventListener('click', () => {
+  q.value = '';
+  field.classList.remove('has-value');
+  document.getElementById('searchform').action = '/';
+  document.getElementById('searchform').submit();
 });
 </script>
 </body>
