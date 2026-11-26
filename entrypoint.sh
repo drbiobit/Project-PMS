@@ -86,9 +86,12 @@ PY
 
 # ── 2+3. embedding endpoint: bundled server OR external ─────────────────
 SERVER_PID=""
+INDEX_PID=""
 cleanup() {
   [ -n "$SERVER_PID" ] && { kill "$SERVER_PID" 2>/dev/null || true;
                             wait "$SERVER_PID" 2>/dev/null || true; }
+  [ -n "$INDEX_PID" ] && { kill "$INDEX_PID" 2>/dev/null || true;
+                           wait "$INDEX_PID" 2>/dev/null || true; }
 }
 trap cleanup EXIT
 
@@ -142,14 +145,18 @@ else
   log "embedding server ready."
 fi
 
-# ── 4. build the index (incremental) ────────────────────────────────────
+# ── 4. serve the gallery FIRST so the UI is live immediately ─────────────
+log "gallery listening on port $PORT"
+
+# ── 5. index in the background (the UI shows live progress via /status) ──
 if [ -d "$MEDIA_DIR" ]; then
-  log "indexing $MEDIA_DIR (incremental — already-indexed files are skipped)…"
-  python3 /app/build_index.py --config /app/config.json
+  log "indexing $MEDIA_DIR in the background (incremental — already-indexed files are skipped)…"
+  python3 /app/build_index.py --config /app/config.json > "$DATA_DIR/index.log" 2>&1 &
+  INDEX_PID=$!
 else
   log "WARNING: $MEDIA_DIR is not mounted — starting with an empty gallery."
 fi
 
-# ── 5. serve the gallery ─────────────────────────────────────────────────
-log "gallery listening on port $PORT"
-exec python3 /app/app.py
+# Run the gallery in the foreground; the background index keeps running and
+# the web UI reflects its progress in real time.
+python3 /app/app.py
