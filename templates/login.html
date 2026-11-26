@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign in · PMS — Portable Media Search</title>
+<link rel="stylesheet" href="/static/fonts.css">
+<style>
+  :root {
+    --stage: #0a0a0a;
+    --panel: #111111;
+    --panel-2: #161616;
+    --line: #262626;
+    --line-soft: #1c1c1c;
+    --ink: #f2f2f2;
+    --ink-soft: #b4b4b4;
+    --muted: #7c7c7c;
+    --accent: #ffffff;
+    --accent-ink: #0a0a0a;
+    --err: #e07a5f;
+    --sans: "Instrument Sans", -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scrollbar-color: #333 var(--stage); }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--stage);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  ::selection { background: rgba(255,255,255,.22); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  input::placeholder { color: var(--muted); }
+  input { caret-color: var(--accent); }
+
+  .shell {
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 30px;
+  }
+  .wordmark {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .brand-sub {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 16px;
+    padding: 26px 24px;
+    text-align: left;
+  }
+  .card h1 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .card .sub {
+    margin: 0 0 20px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .field label {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .field input {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .btn {
+    width: 100%;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .85; }
+  .error {
+    color: var(--err);
+    font-size: 13px;
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    background: rgba(224,122,95,.08);
+    border: 1px solid rgba(224,122,95,.3);
+    border-radius: 10px;
+  }
+  .foot {
+    margin-top: 22px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .foot b { color: var(--ink-soft); font-weight: 600; }
+  @media (max-width: 420px) {
+    .wordmark { font-size: 34px; }
+    .card { padding: 22px 18px; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <div class="brand">
+      <div class="wordmark">PMS</div>
+      <div class="brand-sub">Portable Media Search</div>
+    </div>
+    <form class="card" method="post" action="/login">
+      <h1>Sign in</h1>
+      <p class="sub">This gallery is private. Enter your credentials to continue.</p>
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username"
+               autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password"
+               autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn">Sign in</button>
+    </form>
+    <p class="foot">Running locally · <b>no cloud, no account</b></p>
+  </div>
+</body>
+</html>

@@ -22,6 +22,7 @@
     --err: #e07a5f;
     --sans: "Instrument Sans", -apple-system, "Segoe UI", sans-serif;
     --gap: 14px;
+    --tile-size: 240px;
   }
   * { box-sizing: border-box; }
   html { scrollbar-color: #333 var(--stage); }
@@ -86,6 +87,20 @@
     vertical-align: 1px;
   }
   .dot.off { background: var(--err); }
+  .logout {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    transition: color .15s, border-color .15s;
+  }
+  .logout:hover { color: var(--ink); border-color: var(--accent); }
 
   /* ── tabs ───────────────────────────────────────────────────── */
   .tabs {
@@ -200,13 +215,10 @@
   /* ── gallery grid ───────────────────────────────────────────── */
   .grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(var(--tile-size), 1fr));
     gap: var(--gap);
     padding: 0 28px 56px;
   }
-  @media (min-width: 640px)  { .grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (min-width: 900px)  { .grid { grid-template-columns: repeat(4, 1fr); } }
-  @media (min-width: 1280px) { .grid { grid-template-columns: repeat(5, 1fr); } }
 
   .tile {
     position: relative;
@@ -353,6 +365,24 @@
     outline: none;
   }
   .field-row input[type=number] { width: 110px; text-align: right; }
+  .field-row select {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 8px 10px;
+    width: 130px;
+    outline: none;
+    cursor: pointer;
+  }
+  .field-row input[type=range] {
+    flex: 1;
+    max-width: 240px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
   .field-row input[type=checkbox] {
     width: 18px; height: 18px;
     accent-color: var(--accent);
@@ -508,10 +538,11 @@
     object-fit: contain;
     border-radius: 6px;
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
-    transition: transform .25s cubic-bezier(.2, .8, .2, 1), opacity .2s;
     cursor: zoom-in;
+    touch-action: none;
   }
-  .lb-media img.zoomed { transform: scale(1.8); cursor: zoom-out; }
+  .lb-media img.panning { cursor: grab; }
+  .lb-media img.panning:active { cursor: grabbing; }
   .lb-media video {
     max-width: 100%;
     max-height: 100%;
@@ -563,6 +594,17 @@
     margin: 0 2px;
   }
   @media (max-width: 640px) {
+    header { padding: 18px 16px 0; flex-wrap: wrap; gap: 10px; }
+    .wordmark { font-size: 22px; }
+    .brand-sub { display: none; }
+    .head-right { gap: 10px; }
+    .logout span { display: none; }
+    .tabs { padding: 14px 16px 0; }
+    .searchbar { padding: 16px 16px 18px; flex-wrap: wrap; }
+    .searchbar .top-select { width: 100%; }
+    .searchbar button[type=submit] { width: 100%; padding: 10px; }
+    .grid { padding: 0 16px 40px; gap: 10px; }
+    .count { padding: 0 16px 12px; }
     .lb-stage { padding: 14px 70px; }
     .lb-nav { width: 42px; height: 42px; }
     .lb-nav.prev { left: 12px; }
@@ -571,6 +613,7 @@
     .lb-hint .kbd-only { display: none; }
     .field-row { flex-direction: column; align-items: flex-start; gap: 8px; }
     .field-row input[type=text] { width: 100%; }
+    .field-row input[type=range] { max-width: 100%; }
   }
 
   .lb-media > * { animation: settle .28s cubic-bezier(.2, .8, .2, 1); }
@@ -581,7 +624,7 @@
   .lb-media > img.zoomed { animation: none; }
 </style>
 </head>
-<body>
+<body style="--tile-size: {{ cfg['web']['tile_size'] }}px;">
   <header>
     <div class="brand">
       <div class="wordmark">PMS</div>
@@ -591,6 +634,12 @@
       <span class="head-meta" id="server-pill">
         <span class="dot" id="server-dot"></span>embedding server
       </span>
+      <a class="logout" href="/logout" title="Sign out">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>
+        </svg>
+        <span>Sign out</span>
+      </a>
     </div>
   </header>
 
@@ -702,22 +751,42 @@
           </div>
           <div class="field-row">
             <label for="dim">Vector dimension<small>EmbeddingGemma-2: 768</small></label>
-            <input type="number" id="dim" name="dim" value="{{ cfg['embedding']['dim'] }}">
+            <select id="dim" name="dim">
+              <option value="768" {% if cfg['embedding']['dim'] == 768 %}selected{% endif %}>768</option>
+              <option value="512" {% if cfg['embedding']['dim'] == 512 %}selected{% endif %}>512</option>
+              <option value="384" {% if cfg['embedding']['dim'] == 384 %}selected{% endif %}>384</option>
+              <option value="256" {% if cfg['embedding']['dim'] == 256 %}selected{% endif %}>256</option>
+            </select>
           </div>
           <div class="field-row">
             <label for="batch_size">Batch size<small>files per embedding request · default 8</small></label>
-            <input type="number" id="batch_size" name="batch_size"
-                   value="{{ cfg['embedding']['batch_size'] }}">
+            <select id="batch_size" name="batch_size">
+              <option value="1" {% if cfg['embedding']['batch_size'] == 1 %}selected{% endif %}>1</option>
+              <option value="2" {% if cfg['embedding']['batch_size'] == 2 %}selected{% endif %}>2</option>
+              <option value="4" {% if cfg['embedding']['batch_size'] == 4 %}selected{% endif %}>4</option>
+              <option value="8" {% if cfg['embedding']['batch_size'] == 8 %}selected{% endif %}>8</option>
+              <option value="16" {% if cfg['embedding']['batch_size'] == 16 %}selected{% endif %}>16</option>
+              <option value="32" {% if cfg['embedding']['batch_size'] == 32 %}selected{% endif %}>32</option>
+            </select>
           </div>
           <div class="field-row">
             <label for="image_tokens">Image token budget<small>model default: 280</small></label>
-            <input type="number" id="image_tokens" name="image_tokens"
-                   value="{{ cfg['server']['image_tokens'] }}">
+            <select id="image_tokens" name="image_tokens">
+              <option value="128" {% if cfg['server']['image_tokens'] == 128 %}selected{% endif %}>128</option>
+              <option value="256" {% if cfg['server']['image_tokens'] == 256 %}selected{% endif %}>256</option>
+              <option value="280" {% if cfg['server']['image_tokens'] == 280 %}selected{% endif %}>280</option>
+              <option value="512" {% if cfg['server']['image_tokens'] == 512 %}selected{% endif %}>512</option>
+              <option value="1024" {% if cfg['server']['image_tokens'] == 1024 %}selected{% endif %}>1024</option>
+            </select>
           </div>
           <div class="field-row">
             <label for="video_fps">Video sampling<small>frames per second · model default: 1</small></label>
-            <input type="number" id="video_fps" name="video_fps" step="0.1"
-                   value="{{ cfg['server']['video_fps'] }}">
+            <select id="video_fps" name="video_fps">
+              <option value="0.5" {% if cfg['server']['video_fps'] == 0.5 %}selected{% endif %}>0.5</option>
+              <option value="1" {% if cfg['server']['video_fps'] == 1 %}selected{% endif %}>1.0</option>
+              <option value="2" {% if cfg['server']['video_fps'] == 2 %}selected{% endif %}>2.0</option>
+              <option value="4" {% if cfg['server']['video_fps'] == 4 %}selected{% endif %}>4.0</option>
+            </select>
           </div>
           <div class="field-row">
             <label for="query_prefix">Query prefix<small>“task: search result | query: …” — recommended on</small></label>
@@ -726,7 +795,28 @@
           </div>
           <div class="field-row">
             <label for="top_n">Default results<small>gallery &amp; search cap · 0 = all</small></label>
-            <input type="number" id="top_n" name="top_n" value="{{ cfg['web']['top_n'] }}">
+            <select id="top_n" name="top_n">
+              <option value="0" {% if cfg['web']['top_n'] == 0 %}selected{% endif %}>0 (all)</option>
+              <option value="5" {% if cfg['web']['top_n'] == 5 %}selected{% endif %}>5</option>
+              <option value="10" {% if cfg['web']['top_n'] == 10 %}selected{% endif %}>10</option>
+              <option value="20" {% if cfg['web']['top_n'] == 20 %}selected{% endif %}>20</option>
+              <option value="50" {% if cfg['web']['top_n'] == 50 %}selected{% endif %}>50</option>
+              <option value="100" {% if cfg['web']['top_n'] == 100 %}selected{% endif %}>100</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <label for="tile_size">Tile size<small>grid image size in px</small></label>
+            <select id="tile_size" name="tile_size">
+              <option value="120" {% if cfg['web']['tile_size'] == 120 %}selected{% endif %}>120</option>
+              <option value="160" {% if cfg['web']['tile_size'] == 160 %}selected{% endif %}>160</option>
+              <option value="200" {% if cfg['web']['tile_size'] == 200 %}selected{% endif %}>200</option>
+              <option value="240" {% if cfg['web']['tile_size'] == 240 %}selected{% endif %}>240</option>
+              <option value="280" {% if cfg['web']['tile_size'] == 280 %}selected{% endif %}>280</option>
+              <option value="320" {% if cfg['web']['tile_size'] == 320 %}selected{% endif %}>320</option>
+              <option value="360" {% if cfg['web']['tile_size'] == 360 %}selected{% endif %}>360</option>
+              <option value="400" {% if cfg['web']['tile_size'] == 400 %}selected{% endif %}>400</option>
+              <option value="480" {% if cfg['web']['tile_size'] == 480 %}selected{% endif %}>480</option>
+            </select>
           </div>
           <div class="field-row">
             <label>Server settings<small>image tokens &amp; video FPS apply after a server restart</small></label>
@@ -851,6 +941,23 @@ const lb = document.getElementById('lightbox');
 const media = document.getElementById('lb-media');
 let cur = -1;
 
+// ── zoom / pan (wheel to zoom, drag to pan when zoomed) ───────────
+let view = { scale: 1, tx: 0, ty: 0 };
+let drag = null;
+function applyView(el) {
+  el.style.transform =
+    'translate(' + view.tx + 'px,' + view.ty + 'px) scale(' + view.scale + ')';
+  el.classList.toggle('panning', view.scale > 1);
+}
+window.addEventListener('mousemove', e => {
+  if (!drag) return;
+  view.tx += e.clientX - drag.sx; view.ty += e.clientY - drag.sy;
+  drag.sx = e.clientX; drag.sy = e.clientY;
+  const el = media.querySelector('img');
+  if (el) applyView(el);
+});
+window.addEventListener('mouseup', () => { drag = null; });
+
 function render(i) {
   cur = (i + RESULTS.length) % RESULTS.length;
   const r = RESULTS[cur];
@@ -867,19 +974,29 @@ function render(i) {
     el = document.createElement('img');
     el.src = r.url;
     el.alt = r.filename;
-    el.onclick = () => el.classList.toggle('zoomed');
+    view = { scale: 1, tx: 0, ty: 0 };
+    el.addEventListener('wheel', e => {
+      e.preventDefault();
+      const f = e.deltaY < 0 ? 1.1 : 0.9;
+      view.scale = Math.min(5, Math.max(1, view.scale * f));
+      if (view.scale === 1) { view.tx = 0; view.ty = 0; }
+      applyView(el);
+    }, { passive: false });
+    el.addEventListener('mousedown', e => {
+      if (view.scale <= 1) return;
+      drag = { sx: e.clientX, sy: e.clientY };
+      e.preventDefault();
+    });
   } else if (r.kind === 'video') {
     el = document.createElement('video');
     el.src = r.url;
     el.controls = true;
-    el.autoplay = true;
   } else {
     el = document.createElement('div');
     el.className = 'lb-audio';
     el.innerHTML = '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
     const a = document.createElement('audio');
     a.controls = true;
-    a.autoplay = true;
     a.src = r.url;
     el.appendChild(a);
   }

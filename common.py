@@ -66,6 +66,7 @@ DEFAULT_CONFIG = {
         "host": "127.0.0.1",
         "port": 9090,
         "top_n": 10,
+        "tile_size": 240,
     },
     "auth": {
         "username": "admin",

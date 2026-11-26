@@ -72,6 +72,7 @@ cfg = {
         "host": "0.0.0.0",
         "port": int(port),
         "top_n": int(top),
+        "tile_size": 240,
     },
     "auth": {
         "username": user,
@@ -151,7 +152,9 @@ log "gallery listening on port $PORT"
 # ── 5. index in the background (the UI shows live progress via /status) ──
 if [ -d "$MEDIA_DIR" ]; then
   log "indexing $MEDIA_DIR in the background (incremental — already-indexed files are skipped)…"
-  python3 /app/build_index.py --config /app/config.json > "$DATA_DIR/index.log" 2>&1 &
+  INDEX_LOG="$DATA_DIR/index.log"
+  : > "$INDEX_LOG"  # create/truncate the log so it exists even before indexing writes
+  ( python3 /app/build_index.py --config /app/config.json >> "$INDEX_LOG" 2>&1 ) &
   INDEX_PID=$!
 else
   log "WARNING: $MEDIA_DIR is not mounted — starting with an empty gallery."

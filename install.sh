@@ -2,7 +2,7 @@
 # PMS — Portable Media Search · one-shot installer / launcher
 #
 # Run it straight from GitHub (no clone needed):
-#   curl -fsSL https://raw.githubusercontent.com/drbiobit/search-media/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/drbiobit/Project-PMS/main/install.sh | bash
 #
 # or, from a local clone:
 #   ./install.sh

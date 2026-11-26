@@ -10,6 +10,9 @@ media.db
 .server.log
 .web.log
 
+# MkDocs build output (deployed to GitHub Pages by CI)
+site/
+
 # User data & large binaries (not tracked)
 media/
 models/

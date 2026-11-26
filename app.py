@@ -27,6 +27,8 @@ from flask import (
     render_template,
     request,
     send_from_directory,
+    session,
+    url_for,
 )
 from werkzeug.utils import secure_filename
 
@@ -228,23 +230,59 @@ def _db_count() -> int:
 # --------------------------------------------------------------------------- #
 
 app = Flask(__name__)
+# Stable session key derived from the configured credentials, so a container
+# restart doesn't log everyone out (changing the password does, by design).
+import hashlib
+app.secret_key = hashlib.sha256(
+    (CFG.get("auth", {}).get("username", "") + ":"
+     + CFG.get("auth", {}).get("password", "") + ":pms").encode()
+).hexdigest()
 
-# Routes that must stay reachable without credentials: health checks from
-# run.sh / Docker and the browser's status polling.
-AUTH_EXEMPT = {"/health"}
+# Routes reachable without logging in: health checks (run.sh / Docker /
+# browser status polling), the login page itself, static assets (CSS/fonts),
+# and media files (the gallery <img>/<video> tags load them; keeping them open
+# also lets the lightbox and download links work).
+AUTH_EXEMPT = {"/health", "/login"}
+
+
+def _exempt(path: str) -> bool:
+    return (path in AUTH_EXEMPT
+            or path.startswith("/static/")
+            or path.startswith("/media/"))
 
 
 @app.before_request
 def _require_auth():
-    """Enforce HTTP Basic Auth on every route except the exempt set."""
-    if request.path in AUTH_EXEMPT:
+    """Redirect to the login page unless the session is authenticated."""
+    if _exempt(request.path):
         return None
-    auth = request.authorization
-    if auth is None or not verify_credentials(CFG, auth.username, auth.password):
-        resp = Response("Authentication required", status=401)
-        resp.headers["WWW-Authenticate"] = 'Basic realm="PMS"'
-        return resp
+    if not session.get("authed"):
+        return redirect(url_for("login", next=request.full_path))
     return None
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if session.get("authed"):
+        return redirect("/")
+    error = ""
+    if request.method == "POST":
+        user = request.form.get("username", "")
+        if verify_credentials(CFG, user, request.form.get("password", "")):
+            session["authed"] = True
+            session["user"] = user
+            next_url = request.args.get("next", "/")
+            if not next_url.startswith("/"):  # no open-redirect
+                next_url = "/"
+            return redirect(next_url)
+        error = "Invalid username or password."
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
 
 
 @app.route("/")
@@ -307,6 +345,8 @@ def save_settings():
         CFG["server"]["video_fps"] = float(f.get("video_fps", CFG["server"]["video_fps"]))
         CFG["embedding"]["query_prefix"] = f.get("query_prefix") == "on"
         CFG["web"]["top_n"] = int(f.get("top_n", CFG["web"]["top_n"]))
+        CFG["web"]["tile_size"] = int(
+            f.get("tile_size", CFG["web"]["tile_size"]))
         save_config(CONFIG_PATH, CFG)
     except (ValueError, KeyError):
         pass  # keep previous values on bad input
