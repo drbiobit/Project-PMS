@@ -13,6 +13,10 @@ concurrency:
   group: docker-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE: ghcr.io/${{ github.repository }}
+
 jobs:
   cpu:
     name: CPU · x86_64
@@ -22,24 +26,19 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=cpu
-            type=raw,value=latest
-            type=sha
       - uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
           build-args: LLAMA_VARIANT=cpu-x64
+          tags: |
+            ${{ env.IMAGE }}:cpu
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
           push: true
-          metadata-file: ${{ steps.meta.outputs.path }}
 
   cpu-arm64:
     name: CPU · aarch64
@@ -49,23 +48,18 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=cpu-arm64
-            type=sha
       - uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/arm64
           build-args: LLAMA_VARIANT=cpu-arm64
+          tags: |
+            ${{ env.IMAGE }}:cpu-arm64
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
           push: true
-          metadata-file: ${{ steps.meta.outputs.path }}
 
   cuda:
     name: CUDA · NVIDIA GPU
@@ -75,23 +69,18 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=cuda
-            type=sha
       - uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
           build-args: LLAMA_VARIANT=cuda-x64
+          tags: |
+            ${{ env.IMAGE }}:cuda
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
           push: true
-          metadata-file: ${{ steps.meta.outputs.path }}
 
   rocm:
     name: ROCm · AMD GPU
@@ -101,20 +90,15 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=rocm
-            type=sha
       - uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
           build-args: LLAMA_VARIANT=rocm-x64
+          tags: |
+            ${{ env.IMAGE }}:rocm
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
           push: true
-          metadata-file: ${{ steps.meta.outputs.path }}
