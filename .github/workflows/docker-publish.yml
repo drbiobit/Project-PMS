@@ -30,9 +30,9 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            tag=cpu
-            tag=latest
-            tag=sha-${{ github.sha }}
+            type=raw,value=cpu
+            type=raw,value=latest
+            type=sha
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -57,8 +57,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            tag=cpu-arm64
-            tag=sha-${{ github.sha }}
+            type=raw,value=cpu-arm64
+            type=sha
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -83,8 +83,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            tag=cuda
-            tag=sha-${{ github.sha }}
+            type=raw,value=cuda
+            type=sha
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -109,8 +109,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            tag=rocm
-            tag=sha-${{ github.sha }}
+            type=raw,value=rocm
+            type=sha
       - uses: docker/build-push-action@v6
         with:
           context: .

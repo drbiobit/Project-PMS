@@ -31,7 +31,7 @@ cfg = {
     "server": {
         "host": "127.0.0.1",
         "port": int(sport),
-        "binary": "/usr/local/bin/llama-server",
+        "binary": "/opt/llama/llama-server",
         "model": "/models/embeddinggemma-2-UD-Q5_K_XL.gguf",
         "mmproj": "/models/mmproj-Q8_0.gguf",
         "image_tokens": 280,
@@ -60,7 +60,7 @@ PY
 # ── 2. start the embedding server ───────────────────────────────────────
 LLAMA_LOG="$DATA_DIR/llama-server.log"
 log "starting llama-server (port $SERVER_PORT)…"
-llama-server \
+/opt/llama/llama-server \
   --model "$MODEL" \
   --mmproj "$MMPROJ" \
   --embedding --pooling mean --embd-normalize 2 \

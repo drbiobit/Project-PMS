@@ -32,7 +32,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # ── system dependencies ────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates curl python3 python3-pip \
+        ca-certificates curl python3 python3-pip libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # ── application code ───────────────────────────────────────────────────
@@ -41,6 +41,7 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
 COPY app.py common.py build_index.py search.py entrypoint.sh ./
+RUN chmod +x /app/entrypoint.sh
 COPY templates/ templates/
 COPY static/ static/
 
@@ -56,8 +57,8 @@ RUN set -eux; \
     URL="https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_BUILD}/${ASSET}"; \
     echo "llama.cpp ${LLAMA_BUILD} (${LLAMA_VARIANT}): ${URL}"; \
     curl -fL --retry 3 "$URL" -o /tmp/llama.tar.gz; \
-    tar -xzf /tmp/llama.tar.gz -C /tmp; \
-    install -m 0755 /tmp/llama-*/llama-server /usr/local/bin/llama-server; \
+    tar -xzf /tmp/llama.tar.gz -C /opt; \
+    ln -sfn /opt/llama-${LLAMA_BUILD} /opt/llama; \
     rm -rf /tmp/llama.tar.gz /tmp/llama-*
 
 # ── model: EmbeddingGemma-2 Q5_K_XL + mmproj Q8_0 (Unsloth GGUF) ────────
