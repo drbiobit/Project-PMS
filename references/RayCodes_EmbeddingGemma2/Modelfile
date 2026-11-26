@@ -1,0 +1,4 @@
+FROM ./models/embeddinggemma-2-UD-Q4_K_XL.gguf
+
+TEMPLATE """{{ .Prompt }}"""
+PARAMETER stop "<|end_of_text|>"
