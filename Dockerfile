@@ -57,8 +57,8 @@ RUN set -eux; \
     echo "llama.cpp ${LLAMA_BUILD} (${LLAMA_VARIANT}): ${URL}"; \
     curl -fL --retry 3 "$URL" -o /tmp/llama.tar.gz; \
     tar -xzf /tmp/llama.tar.gz -C /tmp; \
-    install -m 0755 /tmp/llama-server /usr/local/bin/llama-server; \
-    rm -f /tmp/llama.tar.gz /tmp/llama-server
+    install -m 0755 /tmp/llama-*/llama-server /usr/local/bin/llama-server; \
+    rm -rf /tmp/llama.tar.gz /tmp/llama-*
 
 # ── model: EmbeddingGemma-2 Q5_K_XL + mmproj Q8_0 (Unsloth GGUF) ────────
 RUN set -eux; \
