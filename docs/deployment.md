@@ -9,12 +9,12 @@ you can grab the exact image you want from the Releases page.
 
 | Tag | Backend | Architecture | Use when |
 |-----|---------|--------------|----------|
-| `pms:cpu` (also `pms:latest`) | CPU | x86_64 | Default. Any machine. |
-| `pms:cpu-arm64` | CPU | aarch64 | ARM servers (Graviton, Apple silicon hosts). |
-| `pms:cuda` | NVIDIA CUDA | x86_64 | NVIDIA GPU — fastest indexing for big libraries. |
-| `pms:rocm` | AMD ROCm | x86_64 | AMD GPU. |
+| `project-pms:cpu` (also `project-pms:latest`) | CPU | x86_64 | Default. Any machine. |
+| `project-pms:cpu-arm64` | CPU | aarch64 | ARM servers (Graviton, Apple silicon hosts). |
+| `project-pms:cuda` | NVIDIA CUDA | x86_64 | NVIDIA GPU — fastest indexing for big libraries. |
+| `project-pms:rocm` | AMD ROCm | x86_64 | AMD GPU. |
 
-Every image also gets a `pms:sha-<commit>` tag so you can pin an exact
+Every image also gets a `project-pms:sha-<commit>` tag so you can pin an exact
 build.
 
 What's baked into each image:
@@ -31,13 +31,13 @@ your index.
 
 ```bash
 # 1. get the image
-docker pull ghcr.io/drbiobit/pms:cpu
+docker pull ghcr.io/drbiobit/project-pms:cpu
 
 # 2. run it, pointing at your media folder
 docker run -d -p 9090:9090 \
   -v /path/to/your/media:/media:ro \
   -v pms-data:/data \
-  --name pms ghcr.io/drbiobit/pms:cpu
+  --name project-pms ghcr.io/drbiobit/project-pms:cpu
 
 # 3. open http://localhost:9090
 ```
@@ -60,12 +60,20 @@ The repo includes a ready-made `docker-compose.yml`:
 ```yaml
 services:
   pms:
-    image: ghcr.io/drbiobit/pms:cpu
+    image: ghcr.io/drbiobit/project-pms:cpu
+    container_name: project-pms
     ports:
       - "9090:9090"
     volumes:
       - ./media:/media:ro      # ← your media folder
       - pms-data:/data          # persistent index
+    environment:
+      PMS_MEDIA_DIR: /media
+      PMS_PORT: "9090"
+      PMS_TOP_N: "100"
+      # Login credentials — CHANGE THESE before you share the gallery:
+      PMS_AUTH_USER: "admin"
+      PMS_AUTH_PASS: "pms"
     restart: unless-stopped
 volumes:
   pms-data:
@@ -76,12 +84,18 @@ mkdir -p media   # put your photos in here (or point the volume elsewhere)
 docker compose up -d
 ```
 
+> 💡 **Prefer not to edit YAML?** The one-shot installer
+> [`install.sh`](https://github.com/drbiobit/Project-PMS/blob/main/install.sh) writes
+> this compose file for you — it asks for your media folder, image, and a
+> username/password, then runs `docker compose up` for you.
+
 ### NVIDIA GPU
 
 ```yaml
 services:
   pms:
-    image: ghcr.io/drbiobit/pms:cuda
+    image: ghcr.io/drbiobit/project-pms:cuda
+    container_name: project-pms
     ports:
       - "9090:9090"
     volumes:
@@ -99,7 +113,7 @@ services:
 
 ### AMD GPU
 
-Same, with `image: ghcr.io/drbiobit/pms:rocm` and the `rocm` device
+Same, with `image: ghcr.io/drbiobit/project-pms:rocm` and the `rocm` device
 reservation for your AMD stack.
 
 ## Configuration (environment variables)
@@ -140,6 +154,11 @@ The app side is configured entirely through environment variables
 (`PMS_EMBED_BASE_URL`, `PMS_EMBED_API_KEY`, `PMS_EMBED_MODEL`), so you can
 swap in any OpenAI-compatible endpoint — Ollama, vLLM, a gateway — without
 touching the app image.
+
+> 💡 **Or let the installer do it:** run `install.sh` and choose
+> **OpenAI** mode — it builds the slim app image + a standalone embedding
+> server (from `Dockerfile.openai` / `Dockerfile.server`) and wires them up
+> automatically. (These two images are built from source, not pulled from GHCR.)
 
 ## Local (no Docker)
 

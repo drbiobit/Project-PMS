@@ -30,6 +30,7 @@ services:
 
   pms:
     image: pms:openai
+    container_name: project-pms
     depends_on:
       embedding:
         condition: service_healthy

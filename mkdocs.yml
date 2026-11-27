@@ -27,6 +27,7 @@ theme:
     - search
 nav:
   - Home: index.md
+  - Installer: installer.md
   - Architecture: architecture.md
   - Deployment: deployment.md
   - Usage: usage.md

@@ -69,7 +69,7 @@ Read in this order:
   ```
   All modules must import cleanly and all tests must pass.
 - **Local (no Docker)**: `./run.sh` — starts llama-server + the web app.
-- **Docker**: `docker run -d -p 9090:9090 -v /path/to/media:/media:ro -v pms-data:/data ghcr.io/drbiobit/pms:cpu`
+- **Docker**: `docker run -d -p 9090:9090 -v /path/to/media:/media:ro -v pms-data:/data ghcr.io/drbiobit/project-pms:cpu`
 - **One-shot**: `curl -fsSL https://raw.githubusercontent.com/drbiobit/Project-PMS/main/install.sh | bash`
 
 ## Conventions

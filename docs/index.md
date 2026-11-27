@@ -12,8 +12,9 @@ whole collection with natural language:
 
 ## 🚀 Quick start
 
-The fastest way — one command detects your hardware, pulls the right image,
-asks where your media is, and opens the gallery:
+The fastest way — one command checks Docker, asks where your media is, lets
+you pick the image (and an optional local OpenAI endpoint), asks for a
+username/password, and opens the gallery:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/drbiobit/Project-PMS/main/install.sh | bash
@@ -25,7 +26,7 @@ Or plain Docker:
 docker run -d -p 9090:9090 \
   -v /path/to/your/media:/media:ro \
   -v pms-data:/data \
-  ghcr.io/drbiobit/pms:cpu
+  ghcr.io/drbiobit/project-pms:cpu
 ```
 
 Then open **http://localhost:9090** (default login `admin` / `pms`).

@@ -37,7 +37,7 @@ Every file in the repository and what it does.
 
 | File | Purpose |
 |------|---------|
-| `.github/workflows/docker-publish.yml` | On every push to `main`: builds and pushes all four images to GHCR — `pms:cpu`, `pms:cpu-arm64`, `pms:cuda`, `pms:rocm` (+ `pms:latest`). |
+| `.github/workflows/docker-publish.yml` | On every push to `main`: builds and pushes all four images to GHCR — `project-pms:cpu`, `project-pms:cpu-arm64`, `project-pms:cuda`, `project-pms:rocm` (+ `project-pms:latest`). |
 
 ## Docs
 

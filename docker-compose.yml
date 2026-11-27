@@ -10,13 +10,14 @@
 # (only new files get embedded).
 #
 # GPU images (faster indexing for big libraries):
-#   NVIDIA:  image: ghcr.io/drbiobit/pms:cuda   (+ nvidia deploy block)
-#   AMD:     image: ghcr.io/drbiobit/pms:rocm
-#   CPU:     image: ghcr.io/drbiobit/pms:cpu    (default, works everywhere)
+#   NVIDIA:  image: ghcr.io/drbiobit/project-pms:cuda   (+ nvidia deploy block)
+#   AMD:     image: ghcr.io/drbiobit/project-pms:rocm
+#   CPU:     image: ghcr.io/drbiobit/project-pms:cpu    (default, works everywhere)
 
 services:
   pms:
-    image: ghcr.io/drbiobit/pms:cpu
+    image: ghcr.io/drbiobit/project-pms:cpu
+    container_name: project-pms
     ports:
       - "9090:9090"
     volumes:
@@ -24,10 +25,11 @@ services:
       - pms-data:/data          # index database (persistent)
     environment:
       PMS_MEDIA_DIR: /media
-      # PMS_PORT: "9090"
-      # PMS_TOP_N: "100"
-      # PMS_AUTH_USER: "admin"
-      # PMS_AUTH_PASS: "pms"
+      PMS_PORT: "9090"
+      PMS_TOP_N: "100"
+      # Login credentials for the gallery — CHANGE THESE before you share it:
+      PMS_AUTH_USER: "admin"
+      PMS_AUTH_PASS: "pms"
     restart: unless-stopped
     # NVIDIA GPU — uncomment for the :cuda image:
     # deploy:

@@ -10,10 +10,10 @@
 #   rocm-x64        AMD ROCm (latest ROCm build)         x86_64
 #
 # Build:
-#   docker build --build-arg LLAMA_VARIANT=cuda-x64 -t pms:cuda .
+#   docker build --build-arg LLAMA_VARIANT=cuda-x64 -t project-pms:cuda .
 #
 # Run:
-#   docker run -p 9090:9090 -v /path/to/media:/media -v pms-data:/data pms:cpu
+#   docker run -p 9090:9090 -v /path/to/media:/media -v pms-data:/data project-pms:cpu
 #
 # The image downloads at build time:
 #   - the newest llama.cpp release that ships binary assets

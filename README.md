@@ -31,15 +31,18 @@ network.** Your media stays yours. 🔒
 
 ## 🚀 Quick start (one command)
 
-The fastest way to get running — one command detects your hardware, pulls the
-right image, asks where your media is, and opens the gallery:
+The fastest way to get running — one command checks Docker, asks where your
+media is, lets you pick the image (and whether to run a local OpenAI
+endpoint), asks for a username/password, and opens the gallery:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/drbiobit/Project-PMS/main/install.sh | bash
 ```
 
 That's it. 🎉 You'll be pointed at **http://localhost:9090** with a login
-screen. (Default login: `admin` / `pms` — change it in the installer.)
+screen using the username/password you chose.
+
+📖 Full walkthrough of the installer: [`docs/installer.md`](docs/installer.md).
 
 ### Prefer plain Docker?
 
@@ -47,7 +50,7 @@ screen. (Default login: `admin` / `pms` — change it in the installer.)
 docker run -d -p 9090:9090 \
   -v /path/to/your/media:/media:ro \
   -v pms-data:/data \
-  ghcr.io/drbiobit/pms:cpu
+  ghcr.io/drbiobit/project-pms:cpu
 ```
 
 Then open **http://localhost:9090**. First boot builds the index
@@ -57,9 +60,9 @@ automatically; every boot after that is instant. ⚡
 |-----------|---------|
 | 🐳 One-shot install | `curl … install.sh \| bash` (above) |
 | 📖 Docker deployment | [`docs/deployment.md`](docs/deployment.md) — images, compose, GPU setup |
-| 🎮 NVIDIA GPU (fast) | `ghcr.io/drbiobit/pms:cuda` |
-| 🎮 AMD GPU | `ghcr.io/drbiobit/pms:rocm` |
-| 🍏 Apple Silicon / ARM64 | `ghcr.io/drbiobit/pms:cpu-arm64` |
+| 🎮 NVIDIA GPU (fast) | `ghcr.io/drbiobit/project-pms:cuda` |
+| 🎮 AMD GPU | `ghcr.io/drbiobit/project-pms:rocm` |
+| 🍏 Apple Silicon / ARM64 | `ghcr.io/drbiobit/project-pms:cpu-arm64` |
 | 🖥️ Run natively (no Docker) | `./run.sh` — one command |
 | 🧠 How it works | [`docs/architecture.md`](docs/architecture.md) |
 | 📁 Every file explained | [`docs/files.md`](docs/files.md) |
@@ -67,7 +70,7 @@ automatically; every boot after that is instant. ⚡
 
 **Container images** are built on every push and published to
 [GitHub Releases](https://github.com/drbiobit/Project-PMS/releases) —
-pin `pms:cpu`, `pms:cuda`, `pms:rocm`, or an exact `pms:sha-…` build.
+pin `project-pms:cpu`, `project-pms:cuda`, `project-pms:rocm`, or an exact `project-pms:sha-…` build.
 
 ---
 
