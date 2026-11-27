@@ -24,9 +24,9 @@ set -euo pipefail
 
 # ── colours (only when stdout is a tty) ───────────────────────────────────
 if [ -t 1 ]; then
-  BOLD=$'\e[1m'; OK=$'\e[32m'; WARN=$'\e[33m'; ERR=$'\e[31m'; RST=$'\e[0m'
+  BOLD=$'\e[1m'; DIM=$'\e[2m'; CYAN=$'\e[36m'; OK=$'\e[32m'; WARN=$'\e[33m'; ERR=$'\e[31m'; RST=$'\e[0m'
 else
-  BOLD=""; OK=""; WARN=""; ERR=""; RST=""
+  BOLD=""; DIM=""; CYAN=""; OK=""; WARN=""; ERR=""; RST=""
 fi
 
 info()  { printf '%s\n' "${BOLD}$*${RST}"; }
@@ -36,9 +36,22 @@ warn()  { printf '%s\n' "${WARN}⚠ $*${RST}"; }
 cancel() { printf '\n%s\n' "${ERR}✗ $*${RST}" >&2; exit 0; }
 
 # ── 0. banner ─────────────────────────────────────────────────────────────
+# "Project-PMS" banner (hard-coded ASCII art, held in a Python raw string so
+# no shell escaping is needed).
 printf '\n'
-info "PMS · Portable Media Search — installer"
-info "----------------------------------------"
+BANNER=$(python3 -c 'print(r"""  ___             _         __    ___
+  / _ \_______    (_)__ ____/ /_  / _ \__ _  ___
+ / ___/ __/ _ \  / / -_) __/ __/ / ___/  '"'"' \(_-<
+/_/  /_/  \___/_/ /\__/\__/\__/ /_/  /_/_/_/___/
+             |___/""")')
+while IFS= read -r line; do
+  printf '%s\n' "${BOLD}${CYAN}${line}${RST}"
+done <<< "$BANNER"
+printf '%s\n' \
+  "${DIM} Portable Media Search  ·  local-first multimodal search${RST}" \
+  "${DIM} Search your photos, videos & audio with plain words${RST}" \
+  "${DIM} 100% local  ·  no cloud  ·  no API keys${RST}"
+printf '\n'
 
 # ── 1. Docker availability (proceed, or cancel) ───────────────────────────
 command -v docker >/dev/null 2>&1 \
