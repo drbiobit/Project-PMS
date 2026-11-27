@@ -6,7 +6,7 @@
 [![GitHub repo](https://img.shields.io/badge/GitHub-drbiobit%2Fsearch-media-111?logo=github)](https://github.com/drbiobit/Project-PMS)
 [![Docker](https://img.shields.io/badge/Docker-GHCR-2496ed?logo=docker)](https://github.com/drbiobit/Project-PMS/pkgs/container/pms)
 [![Python](https://img.shields.io/badge/Python-3.10+-0078D4?logo=python&logoColor=white)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-111)](#license)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue)](#license)
 
 ---
 
@@ -143,8 +143,19 @@ tests/            pytest suite
 - [`docs/usage.md`](docs/usage.md) — day-to-day usage
 - [`docs/files.md`](docs/files.md) — every file explained
 
+## 🤖 For AI agents
+
+Working on this repo? Read [`AGENTS.md`](AGENTS.md) first — it's the map for the
+codebase (start at `common.py`). A few things that will save you time:
+
+- **Everything is local-first.** No cloud, no API keys, no external calls. Don't add any.
+- **Config is data, not code.** `common.DEFAULT_CONFIG` is the source of truth; `config.json` deep-merges over it. Change a default in *both*.
+- **The embedding endpoint is pluggable.** Build it with `make_client(cfg)` — never hardcode a URL.
+- **`/health` is load-bearing.** `install.sh` and the Docker healthcheck poll it. Don't break it.
+- **Tests are the safety net.** `./venv/bin/python -m pytest tests/ -q` must pass before you call anything done.
+
 ---
 
 ## 📝 License
 
-[MIT](#license) — free to use, modify, and share.
+[Apache License 2.0](LICENSE) — free to use, modify, and share.

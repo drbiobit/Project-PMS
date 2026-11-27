@@ -20,8 +20,8 @@ import os
 import sqlite3
 import struct
 import base64
-from dataclasses import dataclass, field
-from typing import Callable, Optional
+from dataclasses import dataclass
+from typing import Optional
 
 import numpy as np
 import requests
@@ -36,7 +36,7 @@ DEFAULT_CONFIG = {
     "server": {
         "host": "127.0.0.1",
         "port": 8080,
-        "binary": "llama.cpp/llama-b12774/llama-server",
+        "binary": "llama.cpp/llama-b12776/llama-server",
         "model": "models/embeddinggemma/embeddinggemma-2-UD-Q5_K_XL.gguf",
         "mmproj": "models/embeddinggemma/mmproj-Q8_0.gguf",
         "image_tokens": 280,
@@ -411,7 +411,15 @@ class MediaDB:
         self._conn.commit()
 
     def close(self) -> None:
-        self._conn.close()
+        if self._conn is not None:
+            try:
+                self._conn.close()
+            finally:
+                self._conn = None
+
+    def __del__(self):
+        # Safety net: close the connection if the caller forgot the `with` block.
+        self.close()
 
     def __enter__(self):
         return self

@@ -87,12 +87,9 @@ PY
 
 # ── 2+3. embedding endpoint: bundled server OR external ─────────────────
 SERVER_PID=""
-INDEX_PID=""
 cleanup() {
   [ -n "$SERVER_PID" ] && { kill "$SERVER_PID" 2>/dev/null || true;
                             wait "$SERVER_PID" 2>/dev/null || true; }
-  [ -n "$INDEX_PID" ] && { kill "$INDEX_PID" 2>/dev/null || true;
-                           wait "$INDEX_PID" 2>/dev/null || true; }
 }
 trap cleanup EXIT
 
@@ -146,20 +143,15 @@ else
   log "embedding server ready."
 fi
 
-# ── 4. serve the gallery FIRST so the UI is live immediately ─────────────
-log "gallery listening on port $PORT"
-
-# ── 5. index in the background (the UI shows live progress via /status) ──
-if [ -d "$MEDIA_DIR" ]; then
-  log "indexing $MEDIA_DIR in the background (incremental — already-indexed files are skipped)…"
-  INDEX_LOG="$DATA_DIR/index.log"
-  : > "$INDEX_LOG"  # create/truncate the log so it exists even before indexing writes
-  ( python3 /app/build_index.py --config /app/config.json >> "$INDEX_LOG" 2>&1 ) &
-  INDEX_PID=$!
-else
+# ── 4. serve the gallery — the app indexes in-process on startup ─────────
+# The app (app.py) auto-indexes the media folder at boot (PMS_AUTO_INDEX),
+# updating its /status endpoint so the Web UI shows live progress. Running the
+# index inside the app (rather than a separate build_index.py process) is what
+# makes that progress visible; a standalone CLI process can't update /status.
+log "gallery listening on port $PORT (indexing starts in-process, progress via /status)"
+if [ ! -d "$MEDIA_DIR" ]; then
   log "WARNING: $MEDIA_DIR is not mounted — starting with an empty gallery."
 fi
 
-# Run the gallery in the foreground; the background index keeps running and
-# the web UI reflects its progress in real time.
+# Run the gallery in the foreground; it owns the index now.
 python3 /app/app.py

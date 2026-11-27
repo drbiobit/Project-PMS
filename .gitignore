@@ -10,6 +10,11 @@ media.db
 .server.log
 .web.log
 
+# Installer-generated local config (written by install.sh / run.sh)
+.env
+.env.*.bak*
+*.bak-*
+
 # MkDocs build output (deployed to GitHub Pages by CI)
 site/
 

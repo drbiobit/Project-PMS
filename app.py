@@ -21,7 +21,6 @@ import time
 import requests
 from flask import (
     Flask,
-    Response,
     jsonify,
     redirect,
     render_template,
@@ -178,11 +177,12 @@ def _client() -> EmbeddingClient:
 def _result_rows(paths, filenames, kinds, indices, scores):
     results = []
     for idx, score in zip(indices, scores):
+        rel = paths[idx].replace(os.sep, "/").lstrip("/")
         results.append({
             "filename": filenames[idx],
             "kind": kinds[idx],
             "score": score,
-            "url": "/media/" + paths[idx].replace(os.sep, "/"),
+            "url": "/media/" + rel,
         })
     return results
 
@@ -397,5 +397,12 @@ if __name__ == "__main__":
     # self-contained: one process, one port, everything local.
     if not server_running():
         threading.Thread(target=start_server, daemon=True).start()
+    # Auto-index on startup (opt out with PMS_AUTO_INDEX=0/false). This is what
+    # makes the Docker entrypoint show live index progress: instead of running
+    # build_index.py as a separate process, the app indexes in-process and its
+    # /status endpoint reflects the progress in real time.
+    auto_index = os.environ.get("PMS_AUTO_INDEX", "1").strip().lower() not in ("0", "false", "no", "off")
+    if auto_index:
+        threading.Thread(target=start_indexing, daemon=True).start()
     web = CFG["web"]
     app.run(host=web["host"], port=web["port"], debug=False)

@@ -4,7 +4,7 @@
   "server": {
     "host": "127.0.0.1",
     "port": 8080,
-    "binary": "llama.cpp/llama-b12774/llama-server",
+    "binary": "llama.cpp/llama-b12776/llama-server",
     "model": "models/embeddinggemma/embeddinggemma-2-UD-Q5_K_XL.gguf",
     "mmproj": "models/embeddinggemma/mmproj-Q8_0.gguf",
     "image_tokens": 280,

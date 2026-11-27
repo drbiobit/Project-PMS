@@ -39,14 +39,18 @@ cancel() { printf '\n%s\n' "${ERR}✗ $*${RST}" >&2; exit 0; }
 # "Project-PMS" banner (hard-coded ASCII art, held in a Python raw string so
 # no shell escaping is needed).
 printf '\n'
-BANNER=$(python3 -c 'print(r"""  ___             _         __    ___
+if command -v python3 >/dev/null 2>&1; then
+  BANNER=$(python3 -c 'print(r"""  ___             _         __    ___
   / _ \_______    (_)__ ____/ /_  / _ \__ _  ___
  / ___/ __/ _ \  / / -_) __/ __/ / ___/  '"'"' \(_-<
 /_/  /_/  \___/_/ /\__/\__/\__/ /_/  /_/_/_/___/
              |___/""")')
-while IFS= read -r line; do
-  printf '%s\n' "${BOLD}${CYAN}${line}${RST}"
-done <<< "$BANNER"
+  while IFS= read -r line; do
+    printf '%s\n' "${BOLD}${CYAN}${line}${RST}"
+  done <<< "$BANNER"
+else
+  printf '%s\n' "${BOLD}Project-PMS${RST}"
+fi
 printf '%s\n' \
   "${DIM} Portable Media Search  ·  local-first multimodal search${RST}" \
   "${DIM} Search your photos, videos & audio with plain words${RST}" \

@@ -25,7 +25,6 @@ from common import (
     AUDIO_EXTS,
     IMAGE_EXTS,
     VIDEO_EXTS,
-    EmbeddingClient,
     MediaDB,
     estimate_tokens,
     load_config,

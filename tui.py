@@ -28,7 +28,6 @@ import webbrowser
 import requests
 from textual.app import App
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Static
 
@@ -171,13 +170,25 @@ class ConfigScreen(Screen):
             self.refresh_rows()
 
     def start(self):
-        # write the chosen values back into the config
-        self.cfg["embedding"]["dim"] = self.values["dim"]
-        self.cfg["server"]["image_tokens"] = self.values["image_tokens"]
-        self.cfg["server"]["video_fps"] = self.values["video_fps"]
-        self.cfg["embedding"]["query_prefix"] = self.values["query_prefix"]
-        self.cfg["media_folder"] = self.values["media_folder"]
-        self.cfg["web"]["top_n"] = self.values["top_n"]
+        # Coerce the chosen values to the types the rest of the app expects,
+        # and skip the write if any of them is invalid (mirrors app.py).
+        try:
+            dim = int(self.values["dim"])
+            image_tokens = int(self.values["image_tokens"])
+            video_fps = float(self.values["video_fps"])
+            query_prefix = bool(self.values["query_prefix"])
+            media_folder = str(self.values["media_folder"]).strip()
+            top_n = int(self.values["top_n"])
+        except (ValueError, TypeError):
+            return  # keep the previous config; do not start with bad values
+        if not media_folder:
+            return  # never index ""
+        self.cfg["embedding"]["dim"] = dim
+        self.cfg["server"]["image_tokens"] = image_tokens
+        self.cfg["server"]["video_fps"] = video_fps
+        self.cfg["embedding"]["query_prefix"] = query_prefix
+        self.cfg["media_folder"] = media_folder
+        self.cfg["web"]["top_n"] = top_n
         save_config(CONFIG_PATH, self.cfg)
         self.app.push_screen(ProgressScreen(self.cfg))
 
