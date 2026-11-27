@@ -19,5 +19,9 @@ models/
 llama.cpp/
 references/
 
+# Working planning notes (kept local, not committed)
+plan.md
+detailedplan.md
+
 # OS
 .DS_Store
