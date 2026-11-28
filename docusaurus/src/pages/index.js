@@ -135,22 +135,42 @@ export default function Home() {
         <section className={styles.sectionAlt}>
           <div className={styles.sectionInner}>
             <div className={styles.eyebrow}>Quick start</div>
-            <div className={styles.quickRow}>
-              <div className={styles.quickCopy}>
-                <h2 className={styles.sectionTitle}>Up in 30 seconds</h2>
-                <p className={styles.sectionDesc}>
-                  One command checks Docker, asks where your media is, lets you pick the
-                  image, asks for a username/password, and opens the gallery.
-                </p>
-              </div>
-              <div className={styles.codeBlock}>
-                <div className={styles.codeBar}>
-                  <span className={`${styles.dot} ${styles.r}`} />
-                  <span className={`${styles.dot} ${styles.y}`} />
-                  <span className={`${styles.dot} ${styles.g}`} />
+            <h2 className={styles.sectionTitle}>Up in 30 seconds</h2>
+            <p className={styles.sectionDesc}>
+              One command checks Docker, writes the compose file for you, and opens the
+              gallery — no YAML editing, no API keys.
+            </p>
+            <div className={styles.quickSteps}>
+              <div className={styles.quickStep}>
+                <div className={styles.stepNum}>1</div>
+                <div>
+                  <h4>Run the installer</h4>
+                  <p><code>install.sh</code> checks Docker and writes a ready-made compose file for you.</p>
                 </div>
-                <pre className={styles.codeBody}><code><span className={styles.dim}># one-shot installer…</span>\ncurl -fsSL <span className={styles.green}>https://raw.githubusercontent.com/drbiobit/Project-PMS/main/install.sh</span> | bash\n\n<span className={styles.dim}># …or plain Docker</span>\ndocker run -d -p 9090:9090 -v /path/to/media:/media:ro \\\n  -v pms-data:/data <span className={styles.green}>ghcr.io/drbiobit/project-pms:cpu</span></code></pre>
               </div>
+              <div className={styles.quickStep}>
+                <div className={styles.stepNum}>2</div>
+                <div>
+                  <h4>Answer a few questions</h4>
+                  <p>Media folder, image (CPU / CUDA / ROCm), and a username &amp; password. Enter accepts defaults.</p>
+                </div>
+              </div>
+              <div className={styles.quickStep}>
+                <div className={styles.stepNum}>3</div>
+                <div>
+                  <h4>Open the gallery</h4>
+                  <p>The index builds in the background; the browser opens at <code>localhost:9090</code>.</p>
+                </div>
+              </div>
+            </div>
+            <div className={styles.codeBlock}>
+              <div className={styles.codeBar}>
+                <span className={`${styles.dot} ${styles.r}`} />
+                <span className={`${styles.dot} ${styles.y}`} />
+                <span className={`${styles.dot} ${styles.g}`} />
+                <span className={styles.codeBarLabel}>install.sh</span>
+              </div>
+              <pre className={styles.codeBody}><code>curl -fsSL <span className={styles.green}>https://raw.githubusercontent.com/drbiobit/Project-PMS/main/install.sh</span> | bash</code></pre>
             </div>
           </div>
         </section>

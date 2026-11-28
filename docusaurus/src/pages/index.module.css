@@ -41,6 +41,11 @@
   padding: 6rem 2rem 5rem;
 }
 
+/* hero copy column */
+.heroCopy {
+  min-width: 0;
+}
+
 /* badge */
 .badge {
   display: inline-flex;
