@@ -1,4 +1,9 @@
-# Project files
+---
+title: Files
+sidebar_position: 5
+---
+
+# PMS — Project Files
 
 Every file in the repository and what it does.
 
@@ -38,17 +43,15 @@ Every file in the repository and what it does.
 | File | Purpose |
 |------|---------|
 | `.github/workflows/docker-publish.yml` | On every push to `main`: builds and pushes all four images to GHCR — `project-pms:cpu`, `project-pms:cpu-arm64`, `project-pms:cuda`, `project-pms:rocm` (+ `project-pms:latest`). |
+| `.github/workflows/pages.yml` | On every push to `main`: builds the Docusaurus docs site and deploys it to GitHub Pages. |
 
 ## Docs
 
 | File | Purpose |
 |------|---------|
 | `README.md` | Project home: what PMS is, why it exists, quick deploy links. |
-| `docs/README.md` | Docs index. |
-| `docs/architecture.md` | How PMS works under the hood. |
-| `docs/files.md` | This file. |
-| `docs/deployment.md` | Docker deployment guide. |
-| `docs/usage.md` | Day-to-day usage guide. |
+| `docusaurus/` | The documentation site (Docusaurus) — built and published to GitHub Pages. |
+| `docusaurus/docs/` | The doc pages: introduction, installer, deployment, architecture, usage, files, embedding reference. |
 
 ## Not in the repo (gitignored)
 

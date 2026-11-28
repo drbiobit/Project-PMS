@@ -1,0 +1,136 @@
+/* Snag docs - custom theme.
+   Green accent (matches the app icon). Inter for body text (clean, readable),
+   Source Code Pro for code blocks (monospace, terminal feel). */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;700&display=swap');
+
+:root {
+  --ifm-color-primary: #3ddc84;
+  --ifm-color-primary-dark: #2fc773;
+  --ifm-color-primary-darker: #2ab86a;
+  --ifm-color-primary-darkest: #229a56;
+  --ifm-color-primary-light: #4ee091;
+  --ifm-color-primary-lighter: #5ae49c;
+  --ifm-color-primary-lightest: #86efac;
+  --ifm-font-size-base: 14px;
+  --ifm-code-font-size: 95%;
+  --ifm-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Oxygen, Ubuntu, sans-serif;
+  --ifm-font-family-monospace: 'Source Code Pro', ui-monospace, SFMono-Regular,
+    Menlo, Monaco, Consolas, monospace;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #3ddc84;
+  --ifm-color-primary-dark: #2fc773;
+  --ifm-color-primary-darker: #2ab86a;
+  --ifm-color-primary-darkest: #229a56;
+  --ifm-color-primary-light: #4ee091;
+  --ifm-color-primary-lighter: #5ae49c;
+  --ifm-color-primary-lightest: #86efac;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Dark navbar, sidebar, footer & search (matches the landing page) ── */
+
+.navbar {
+  background: #0a0c0f !important;
+  border-bottom: 1px solid #1d232c;
+}
+.navbar .navbar__inner {
+  color: #e8ecf1;
+}
+.navbar .navbar__brand {
+  color: #e8ecf1;
+}
+.navbar .navbar__title {
+  color: #f4f7fa;
+}
+.navbar .navbar__link {
+  color: #8fa0b0;
+}
+.navbar .navbar__link:hover {
+  color: #e8ecf1;
+}
+.navbar .navbar__link--active {
+  color: #3ddc84 !important;
+}
+
+/* sidebar */
+.menu {
+  background: #0e1116 !important;
+  border-right: 1px solid #1d232c;
+}
+.menu .menu__link {
+  color: #7a8a9a;
+}
+.menu .menu__link:hover {
+  color: #e8ecf1;
+  background: rgba(255,255,255,0.04);
+}
+.menu .menu__link--active {
+  color: #3ddc84 !important;
+  background: rgba(61,220,132,0.06) !important;
+}
+.menu .menu__list {
+  background: transparent;
+}
+.menu .menu__caret {
+  color: #4a5563;
+}
+
+/* search modal */
+.docSearch .DocSearch-Modal {
+  background: #11151b !important;
+}
+.DocSearch-Container {
+  background: #11151b !important;
+}
+.DocSearch-Search-Button {
+  background: #1a2028 !important;
+  border: 1px solid #1d232c !important;
+  color: #8fa0b0 !important;
+}
+.DocSearch-Search-Input {
+  background: #0a0d11 !important;
+  border: 1px solid #1d232c !important;
+  color: #e8ecf1 !important;
+}
+.DocSearch-Search-Input::placeholder {
+  color: #4a5563;
+}
+.DocSearch-Hits {
+  background: #11151b;
+}
+.DocSearch-Hits-* {
+  color: #8fa0b0;
+}
+.DocSearch-Hits-mark {
+  background: rgba(61,220,132,0.2);
+  color: #3ddc84;
+}
+
+.footer {
+  background: #0a0c0f !important;
+  border-top: 1px solid #1d232c;
+}
+.footer .footer__links {
+  padding-top: 2rem;
+}
+.footer .footer__title {
+  color: #8fa0b0;
+}
+.footer .footer__link {
+  color: #6b7a8a;
+}
+.footer .footer__link:hover {
+  color: #e8ecf1;
+}
+.footer .footer__bottom {
+  background: transparent;
+  border-top: 1px solid #1d232c;
+}
+.footer .footer__copyright {
+  color: #4a5563;
+}

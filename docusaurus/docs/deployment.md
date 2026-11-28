@@ -1,4 +1,9 @@
-# Deployment
+---
+title: Deployment
+sidebar_position: 2
+---
+
+# PMS — Deployment Guide
 
 PMS ships as a Docker image. The image is built by GitHub Actions on
 every push to `main` and published to **GHCR** (GitHub Container
@@ -169,7 +174,7 @@ If you'd rather run natively:
 ./run.sh stop     # shut it all down
 ```
 
-See [usage.md](usage.md) for the full local workflow.
+See [Usage](/usage) for the full local workflow.
 
 ## Updating the llama.cpp pin
 

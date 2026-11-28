@@ -1,4 +1,9 @@
-# Architecture
+---
+title: Architecture
+sidebar_position: 3
+---
+
+# PMS — Architecture
 
 PMS has three layers: an **embedding engine**, a **database**, and a
 **search UI**. All of it runs locally.

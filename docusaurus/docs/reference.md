@@ -1,3 +1,8 @@
+---
+title: Embedding Reference
+sidebar_position: 6
+---
+
 # Media Embedding Reference — EmbeddingGemma-2 via llama.cpp
 
 Everything verified by running the local model + reading the authoritative docs
@@ -116,8 +121,6 @@ Response shape (all modalities): `[{"index":0,"embedding":[[<768 floats>]]}]` �
 | Video | **mp4, mov** (ffmpeg-decodable) | 140 tokens/frame; 1 fps default; ~58 frames max |
 | Audio | wav, mp3, m4a, flac (ffmpeg-decodable) | resampled to 16 kHz mono; 25 tokens/sec |
 | Text | any UTF-8 string | with task prefix for queries |
-
-Our `media/` folder: 17 JPG + 4 MOV → all supported.
 
 ---
 

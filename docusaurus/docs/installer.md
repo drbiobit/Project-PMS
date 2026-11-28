@@ -1,4 +1,9 @@
-# Installer
+---
+title: Installer
+sidebar_position: 1
+---
+
+# PMS — Installer
 
 The fastest way to run PMS is the one-shot installer, `install.sh`. It
 checks Docker, walks you through a few questions, writes a
@@ -99,4 +104,4 @@ To change the port, re-run `./install.sh` with `PMS_PORT=<port> ./install.sh`
 
 > 📖 For manual, non-installer deployments (raw `docker run`, GPU device
 > reservations, the full env-var reference, and the OpenAI compose file), see
-> [Deployment](deployment.md).
+> [Deployment](/deployment).

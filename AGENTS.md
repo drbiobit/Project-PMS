@@ -37,8 +37,9 @@ Read in this order:
 4. **`search.py`** — the CLI semantic search.
 5. **`templates/index.html`** and **`templates/login.html`** — the UI
    (single-file HTML/CSS/JS, Jinja2 for `index.html`).
-6. **`docs/`** — the full documentation: `architecture.md`,
-   `deployment.md`, `usage.md`, `files.md`.
+6. **`docusaurus/docs/`** — the full documentation (Docusaurus site, published
+   to GitHub Pages): `introduction.md`, `architecture.md`, `deployment.md`,
+   `usage.md`, `files.md`, `reference.md`, `installer.md`.
 
 ## Key files at a glance
 
@@ -52,6 +53,7 @@ Read in this order:
 | `config.json` | Runtime config (server, media, embedding, web, auth) |
 | `templates/` | Gallery + login UI |
 | `static/` | Self-hosted fonts |
+| `docusaurus/` | Documentation site (Docusaurus) — built by `.github/workflows/pages.yml` |
 | `Dockerfile` | Ubuntu image (cpu/cuda/rocm/arm64 variants) |
 | `Dockerfile.openai` | Slim app image that uses an **external** OpenAI endpoint |
 | `Dockerfile.server` | Standalone embedding-server image |

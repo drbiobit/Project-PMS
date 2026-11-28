@@ -1,0 +1,82 @@
+# ===========================================================================
+# Build the PMS docs site (Docusaurus) and publish it to GitHub Pages.
+#
+# Result: https://drbiobit.github.io/Project-PMS/
+#   A full Docusaurus site with a sidebar, client-side search, and the
+#   guides that live in docusaurus/docs/.
+#
+# Triggered on every push to main (and on demand from the Actions tab).
+# The "Deploy to GitHub Pages" job needs the `pages` permission and the
+# "github-pages" environment - both are already enabled on this repo
+# (Settings -> Pages -> Source: GitHub Actions).
+# ===========================================================================
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Only rebuild the site when something that affects it changes.
+      - 'docusaurus/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# `pages` permission lets the deploy job write to the Pages site.
+# `id-token` is required for the official pages deploy action.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy should be in flight at a time.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build the Docusaurus site into a static bundle.
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # Everything for the site lives in the docusaurus/ subfolder.
+        working-directory: docusaurus
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: docusaurus/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      # Upload the build output (docusaurus/build) as the Pages artifact.
+      - name: Upload build artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docusaurus/build
+
+  # Deploy the built site to GitHub Pages.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

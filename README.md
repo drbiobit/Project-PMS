@@ -42,7 +42,7 @@ curl -fsSL https://raw.githubusercontent.com/drbiobit/Project-PMS/main/install.s
 That's it. 🎉 You'll be pointed at **http://localhost:9090** with a login
 screen using the username/password you chose.
 
-📖 Full walkthrough of the installer: [`docs/installer.md`](docs/installer.md).
+📖 Full walkthrough of the installer: [Installer guide](https://drbiobit.github.io/Project-PMS/installer).
 
 ### Prefer plain Docker?
 
@@ -59,14 +59,14 @@ automatically; every boot after that is instant. ⚡
 | You want… | …so use |
 |-----------|---------|
 | 🐳 One-shot install | `curl … install.sh \| bash` (above) |
-| 📖 Docker deployment | [`docs/deployment.md`](docs/deployment.md) — images, compose, GPU setup |
+| 📖 Docker deployment | [Deployment guide](https://drbiobit.github.io/Project-PMS/deployment) — images, compose, GPU setup |
 | 🎮 NVIDIA GPU (fast) | `ghcr.io/drbiobit/project-pms:cuda` |
 | 🎮 AMD GPU | `ghcr.io/drbiobit/project-pms:rocm` |
 | 🍏 Apple Silicon / ARM64 | `ghcr.io/drbiobit/project-pms:cpu-arm64` |
 | 🖥️ Run natively (no Docker) | `./run.sh` — one command |
-| 🧠 How it works | [`docs/architecture.md`](docs/architecture.md) |
-| 📁 Every file explained | [`docs/files.md`](docs/files.md) |
-| 🕹️ Day-to-day usage | [`docs/usage.md`](docs/usage.md) |
+| 🧠 How it works | [Architecture guide](https://drbiobit.github.io/Project-PMS/architecture) |
+| 📁 Every file explained | [Files guide](https://drbiobit.github.io/Project-PMS/files) |
+| 🕹️ Day-to-day usage | [Usage guide](https://drbiobit.github.io/Project-PMS/usage) |
 
 **Container images** are built on every push and published to
 [GitHub Releases](https://github.com/drbiobit/Project-PMS/releases) —
@@ -128,7 +128,7 @@ Dockerfile.server standalone embedding-server image
 entrypoint.sh     container boot sequence
 docker-compose.yml  self-hosted compose file
 docker-compose.openai.yml  app + external endpoint compose
-docs/             full documentation
+docusaurus/         the documentation site (Docusaurus)
 tests/            pytest suite
 ```
 
@@ -136,12 +136,17 @@ tests/            pytest suite
 
 ## 📄 Documentation
 
-📚 The full documentation site lives in [`docs/`](docs/):
+📚 The full documentation site lives at
+[**drbiobit.github.io/Project-PMS**](https://drbiobit.github.io/Project-PMS/) —
+built with Docusaurus from [`docusaurus/docs/`](docusaurus/docs/):
 
-- [`docs/architecture.md`](docs/architecture.md) — how it all fits together
-- [`docs/deployment.md`](docs/deployment.md) — Docker, GPU, compose, endpoints
-- [`docs/usage.md`](docs/usage.md) — day-to-day usage
-- [`docs/files.md`](docs/files.md) — every file explained
+- [Introduction](https://drbiobit.github.io/Project-PMS/) — what PMS is and where to start
+- [Installer](https://drbiobit.github.io/Project-PMS/installer) — the one-shot `install.sh`
+- [Deployment](https://drbiobit.github.io/Project-PMS/deployment) — Docker, GPU, compose, endpoints
+- [Architecture](https://drbiobit.github.io/Project-PMS/architecture) — how it all fits together
+- [Usage](https://drbiobit.github.io/Project-PMS/usage) — day-to-day usage
+- [Files](https://drbiobit.github.io/Project-PMS/files) — every file explained
+- [Embedding Reference](https://drbiobit.github.io/Project-PMS/reference) — EmbeddingGemma-2 via llama.cpp
 
 ## 🤖 For AI agents
 

@@ -15,8 +15,7 @@ media.db
 .env.*.bak*
 *.bak-*
 
-# MkDocs build output (deployed to GitHub Pages by CI)
-site/
+# (Docusaurus build output lives in docusaurus/ and is ignored there)
 
 # User data & large binaries (not tracked)
 media/

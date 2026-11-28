@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" width="800" height="560" font-family="Inter, -apple-system, 'Segoe UI', sans-serif">
+  <defs>
+    <linearGradient id="t1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7a15c"/><stop offset="1" stop-color="#8a3b2c"/>
+    </linearGradient>
+    <linearGradient id="t2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3f7fa6"/><stop offset="1" stop-color="#17324a"/>
+    </linearGradient>
+    <linearGradient id="t3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5a2a3a"/><stop offset="1" stop-color="#2a1626"/>
+    </linearGradient>
+    <linearGradient id="t4" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f8a4c"/><stop offset="1" stop-color="#1e3a24"/>
+    </linearGradient>
+    <linearGradient id="t5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6a5aa8"/><stop offset="1" stop-color="#2c2450"/>
+    </linearGradient>
+    <linearGradient id="t6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d8b25a"/><stop offset="1" stop-color="#6a4d1e"/>
+    </linearGradient>
+    <linearGradient id="t7" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5c6a7a"/><stop offset="1" stop-color="#232c36"/>
+    </linearGradient>
+    <linearGradient id="t8" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b06a86"/><stop offset="1" stop-color="#4a2438"/>
+    </linearGradient>
+  </defs>
+
+  <!-- page background -->
+  <rect width="800" height="560" fill="#0d1015"/>
+
+  <!-- header -->
+  <rect width="800" height="64" fill="#11151b"/>
+  <line x1="0" y1="64" x2="800" y2="64" stroke="#1d232c"/>
+  <rect x="16" y="16" width="32" height="32" rx="7" fill="#000000"/>
+  <circle cx="29" cy="29" r="6.5" fill="none" stroke="#3ddc84" stroke-width="3"/>
+  <path d="M33.5 33.5L38.5 38.5" stroke="#3ddc84" stroke-width="3" stroke-linecap="round"/>
+  <text x="58" y="38" fill="#f4f7fa" font-size="17" font-weight="800" letter-spacing="-0.5">PMS</text>
+
+  <!-- search bar -->
+  <rect x="140" y="16" width="470" height="32" rx="8" fill="#0a0d11" stroke="#2f3a45"/>
+  <circle cx="163" cy="31" r="5.5" fill="none" stroke="#6b7a8a" stroke-width="1.8"/>
+  <path d="M167 35L171.5 39.5" stroke="#6b7a8a" stroke-width="1.8" stroke-linecap="round"/>
+  <text x="184" y="37" fill="#9aa8b8" font-size="13.5">a red sports car in the rain</text>
+  <rect x="628" y="16" width="156" height="32" rx="8" fill="#3ddc84"/>
+  <text x="706" y="37" fill="#07140c" font-size="13.5" font-weight="800" text-anchor="middle">Search</text>
+
+  <!-- results caption -->
+  <text x="24" y="92" fill="#6b7a8a" font-size="12.5">8 results · ranked by semantic similarity</text>
+
+  <!-- tile 1: sunset -->
+  <rect x="24" y="104" width="176" height="200" rx="10" fill="url(#t1)"/>
+  <circle cx="112" cy="170" r="26" fill="#ffd9a0" opacity="0.85"/>
+  <path d="M24 264 L90 210 L150 264 Z" fill="#5a2418" opacity="0.7"/>
+
+  <!-- tile 2: sea -->
+  <rect x="216" y="104" width="176" height="200" rx="10" fill="url(#t2)"/>
+  <circle cx="286" cy="150" r="20" fill="#cfe6f2" opacity="0.8"/>
+  <path d="M216 230 Q260 218 304 230 T392 230 L392 304 L216 304 Z" fill="#0e2233" opacity="0.8"/>
+
+  <!-- tile 3: HIGHLIGHT — red car in the rain -->
+  <rect x="408" y="104" width="176" height="200" rx="10" fill="url(#t3)"/>
+  <rect x="408" y="104" width="176" height="200" rx="10" fill="none" stroke="#3ddc84" stroke-width="3"/>
+  <!-- car silhouette -->
+  <path d="M436 250 h120 v-14 l-14 -8 h-30 l-16 -12 h-32 l-14 12 h-18 z" fill="#c0392b" opacity="0.95"/>
+  <circle cx="452" cy="250" r="8" fill="#1a1218"/>
+  <circle cx="540" cy="250" r="8" fill="#1a1218"/>
+  <!-- rain streaks -->
+  <g stroke="#8fa8c8" stroke-width="1.5" opacity="0.55">
+    <line x1="430" y1="118" x2="424" y2="140"/>
+    <line x1="470" y1="112" x2="464" y2="134"/>
+    <line x1="510" y1="120" x2="504" y2="142"/>
+    <line x1="550" y1="112" x2="544" y2="134"/>
+    <line x1="570" y1="150" x2="564" y2="172"/>
+    <line x1="440" y1="160" x2="434" y2="182"/>
+    <line x1="500" y1="158" x2="494" y2="180"/>
+  </g>
+  <!-- score badge -->
+  <rect x="534" y="112" width="42" height="22" rx="6" fill="#3ddc84"/>
+  <text x="555" y="128" fill="#07140c" font-size="12.5" font-weight="800" text-anchor="middle">0.87</text>
+
+  <!-- tile 4: forest -->
+  <rect x="600" y="104" width="176" height="200" rx="10" fill="url(#t4)"/>
+  <path d="M630 264 L660 190 L690 264 Z" fill="#12261a" opacity="0.9"/>
+  <path d="M672 264 L704 176 L736 264 Z" fill="#0e2015" opacity="0.95"/>
+  <circle cx="740" cy="136" r="14" fill="#e8e2b0" opacity="0.7"/>
+
+  <!-- tile 5: dusk city -->
+  <rect x="24" y="320" width="176" height="200" rx="10" fill="url(#t5)"/>
+  <g fill="#1c1836" opacity="0.9">
+    <rect x="44" y="404" width="26" height="116"/>
+    <rect x="80" y="372" width="30" height="148"/>
+    <rect x="120" y="416" width="24" height="104"/>
+    <rect x="152" y="388" width="28" height="132"/>
+  </g>
+  <g fill="#ffd98a" opacity="0.8">
+    <rect x="86" y="384" width="5" height="5"/><rect x="98" y="384" width="5" height="5"/>
+    <rect x="86" y="400" width="5" height="5"/><rect x="100" y="416" width="5" height="5"/>
+    <rect x="158" y="400" width="5" height="5"/><rect x="170" y="416" width="5" height="5"/>
+  </g>
+
+  <!-- tile 6: field -->
+  <rect x="216" y="320" width="176" height="200" rx="10" fill="url(#t6)"/>
+  <path d="M216 430 Q304 400 392 430 L392 520 L216 520 Z" fill="#5a421c" opacity="0.85"/>
+  <circle cx="346" cy="360" r="18" fill="#fff3cf" opacity="0.9"/>
+
+  <!-- tile 7: city rain -->
+  <rect x="408" y="320" width="176" height="200" rx="10" fill="url(#t7)"/>
+  <g fill="#1b232c" opacity="0.95">
+    <rect x="428" y="400" width="34" height="120"/>
+    <rect x="472" y="372" width="30" height="148"/>
+    <rect x="512" y="416" width="36" height="104"/>
+    <rect x="556" y="388" width="26" height="132"/>
+  </g>
+  <g stroke="#9ab0c4" stroke-width="1.5" opacity="0.5">
+    <line x1="440" y1="336" x2="434" y2="356"/>
+    <line x1="490" y1="332" x2="484" y2="352"/>
+    <line x1="540" y1="338" x2="534" y2="358"/>
+    <line x1="575" y1="334" x2="569" y2="354"/>
+  </g>
+
+  <!-- tile 8: sunset beach -->
+  <rect x="600" y="320" width="176" height="200" rx="10" fill="url(#t8)"/>
+  <circle cx="688" cy="372" r="22" fill="#ffd9b0" opacity="0.9"/>
+  <path d="M600 440 Q688 424 776 440 L776 520 L600 520 Z" fill="#38182a" opacity="0.85"/>
+</svg>
